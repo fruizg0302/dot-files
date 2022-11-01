@@ -61,6 +61,7 @@ return packer.startup(function(use)
 
 	-- autocompletion
 	use("hrsh7th/nvim-cmp") -- completion plugin
+	use({ "tzachar/cmp-tabnine", run = "./install.sh", requires = "hrsh7th/nvim-cmp" })
 	use("hrsh7th/cmp-buffer") -- source for text in buffer
 	use("hrsh7th/cmp-path") -- source for file system paths
 
