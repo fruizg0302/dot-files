@@ -1,9 +1,10 @@
-local tabnine = pcall(require, "cmp_tabnine.config")
+local status, tabnine = pcall(require, "cmp_tabnine.config")
 
-if not cmp_status then
+if not status then
 	return
 end
 
+-- Tabnine setup
 tabnine.setup({
 	max_lines = 1000,
 	max_num_results = 20,
