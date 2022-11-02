@@ -27,6 +27,14 @@ mason_lspconfig.setup({
 		"cssls",
 		"tailwindcss",
 		"sumneko_lua",
+		"eslint",
+		"elixirls",
+		"emmet_ls",
+		"graphql",
+		"ruby_ls",
+		"sqlls",
+		"yamlls",
+		"solargraph",
 	},
 	-- auto-install configured servers (with lspconfig)
 	automatic_installation = true, -- not the same as ensure_installed
