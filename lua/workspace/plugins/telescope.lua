@@ -14,6 +14,8 @@ end
 telescope.setup({
 	-- configure custom mappings
 	defaults = {
+		layout_strategy = "vertical",
+		layout_config = { height = 0.99 },
 		mappings = {
 			i = {
 				["<C-k>"] = actions.move_selection_previous, -- move to prev result
@@ -21,7 +23,7 @@ telescope.setup({
 				["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist, -- send selected to quickfixlist
 			},
 		},
-	},
+	}
 })
 
 telescope.load_extension("fzf")
