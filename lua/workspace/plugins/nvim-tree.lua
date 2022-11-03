@@ -26,13 +26,13 @@ nvimtree.setup({
 		signcolumn = "yes",
 	},
 	renderer = {
+		highlight_opened_files = "all",
 		icons = {
 			glyphs = {
 				folder = {
 					arrow_closed = "", -- arrow when folder is closed
 					arrow_open = "", -- arrow when folder is open
 				},
-				highlight_opened_files = "all",
 				git = {
 					unstaged = "✗",
 					staged = "✓",
@@ -55,7 +55,7 @@ nvimtree.setup({
 		timeout = 400,
 	},
 	filesystem_watchers = {
-		enable = true,
+		enable = false,
 		debounce_delay = 50,
 	},
 	actions = {

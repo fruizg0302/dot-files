@@ -7,6 +7,11 @@ local keymap = vim.keymap -- for conciseness
 -- General Keymaps
 ---------------------
 
+-- buffer management
+keymap.set("n", "<leader>tbp", ":bprevious<CR>")
+keymap.set("n", "<leader>tbn", ":bnext<CR>")
+keymap.set("n", "<leader>tbf", ":bfirst<CR>")
+keymap.set("n", "<leader>tbl", ":blast<CR>")
 -- use jk to exit insert mode
 keymap.set("i", "jk", "<ESC>")
 
