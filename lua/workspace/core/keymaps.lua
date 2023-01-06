@@ -12,6 +12,7 @@ keymap.set("n", "<leader>pb", ":bprevious<CR>")
 keymap.set("n", "<leader>nb", ":bnext<CR>")
 keymap.set("n", "<leader>fb", ":bfirst<CR>")
 keymap.set("n", "<leader>lb", ":blast<CR>")
+keymap.set("n", "<leader>db", ":bdelete<CR>")
 -- use jk to exit insert mode
 keymap.set("i", "jk", "<ESC>")
 
