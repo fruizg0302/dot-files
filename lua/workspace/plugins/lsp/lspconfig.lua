@@ -37,6 +37,9 @@ local on_attach = function(client, bufnr)
 	keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>", opts) -- show documentation for what is under cursor
 	keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<CR>", opts) -- see outline on right hand side
 
+	if client.name == "solargraph" then
+		client.server_capabilities.document_formatting = true
+	end
 	-- typescript specific keymaps (e.g. rename file and update imports)
 	if client.name == "tsserver" then
 		keymap.set("n", "<leader>rf", ":TypescriptRenameFile<CR>") -- rename file and update imports
@@ -46,8 +49,6 @@ local on_attach = function(client, bufnr)
 end
 
 -- used to enable autocompletion (assign to every lsp server config)
-local capabilities = cmp_nvim_lsp.default_capabilities()
-
 -- Change the Diagnostic symbols in the sign column (gutter)
 -- (not in youtube nvim video)
 local signs = { Error = " ", Warn = " ", Hint = "ﴞ ", Info = " " }
@@ -55,6 +56,8 @@ for type, icon in pairs(signs) do
 	local hl = "DiagnosticSign" .. type
 	vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
 end
+
+local capabilities = cmp_nvim_lsp.default_capabilities()
 
 -- configure html server
 lspconfig["html"].setup({
@@ -67,9 +70,37 @@ lspconfig["ruby_ls"].setup({
 	on_attach = on_attach,
 })
 
+local handlers = {
+	["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
+		virtual_text = true,
+	}),
+}
+
 lspconfig["solargraph"].setup({
-	capabilities = capabilities,
+	cmd = {
+		"solargraph",
+		"stdio",
+	},
+	filetypes = {
+		"ruby",
+	},
+	flags = {
+		debounce_text_changes = 150,
+	},
 	on_attach = on_attach,
+	root_dir = lspconfig.util.root_pattern("Gemfile", ".git", "."),
+	capabilities = capabilities,
+	handlers = handlers,
+	settings = {
+		solargraph = {
+			completion = true,
+			diagnostic = true,
+			folding = true,
+			references = true,
+			rename = true,
+			symbols = true,
+		},
+	},
 })
 
 -- configure typescript server with plugin

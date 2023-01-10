@@ -17,6 +17,9 @@ null_ls.setup({
 	sources = {
 		--  to disable file types use
 		--  "formatting.prettier.with({disabled_filetypes: {}})" (see null-ls docs)
+		debounce = 2000,
+		debug = true,
+		formatting.rubocop,
 		formatting.prettier, -- js/ts formatter
 		formatting.stylua, -- lua formatter
 		diagnostics.eslint_d.with({ -- js/ts linter
@@ -46,3 +49,28 @@ null_ls.setup({
 		end
 	end,
 })
+
+local helpers = require("null-ls.helpers")
+
+local ruby_syntax_check = {
+	method = null_ls.methods.DIAGNOSTICS,
+	filetypes = { "ruby" },
+	generator = helpers.generator_factory({
+		args = { "-a" },
+		command = "ruby",
+		format = "line",
+		from_stderr = true,
+		check_exit_code = function(code)
+			local success = code <= 1
+			return success
+		end,
+		to_stdin = true,
+		on_output = helpers.diagnostics.from_pattern([[.*:(%d+): (.*)]], { "row", "message" }, {
+			diagnostic = {
+				severity = helpers.diagnostics.severities.error,
+			},
+		}),
+	}),
+}
+
+null_ls.register({ name = "ruby-syntax", sources = { ruby_syntax_check } })
