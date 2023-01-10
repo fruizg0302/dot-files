@@ -31,7 +31,6 @@ mason_lspconfig.setup({
 		"elixirls",
 		"emmet_ls",
 		"graphql",
-		"ruby_ls",
 		"sqlls",
 		"yamlls",
 		"solargraph",
