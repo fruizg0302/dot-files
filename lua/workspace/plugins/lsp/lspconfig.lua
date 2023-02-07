@@ -54,6 +54,22 @@ local on_attach = function(client, bufnr)
 		keymap.set("n", "<leader>oi", ":TypescriptOrganizeImports<CR>") -- organize imports (not in youtube nvim video)
 		keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<CR>") -- remove unused variables (not in youtube nvim video)
 	end
+
+	vim.api.nvim_create_autocmd("CursorHold", {
+		buffer = bufnr,
+		callback = function()
+		  local opts = {
+			focusable = false,
+			close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
+			border = 'rounded',
+			source = 'always',
+			prefix = ' ',
+			scope = 'cursor',
+		  }
+		  vim.diagnostic.open_float(nil, opts)
+		end
+	  })
+	  
 end
 
 -- used to enable autocompletion (assign to every lsp server config)

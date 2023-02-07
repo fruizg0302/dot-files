@@ -26,6 +26,9 @@ if not status then
 	return
 end
 
+vim.o.updatetime = 100
+-- vim.cmd [[autocmd! CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false, scope="cursor"})]]
+
 -- add list of plugins to install
 return packer.startup(function(use)
 	-- packer can manage itself
