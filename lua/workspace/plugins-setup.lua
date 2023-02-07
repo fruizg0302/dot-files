@@ -126,4 +126,5 @@ return packer.startup(function(use)
 	})
 
 	use("MunifTanjim/nui.nvim")
+	use("mhanberg/elixir.nvim")
 end)

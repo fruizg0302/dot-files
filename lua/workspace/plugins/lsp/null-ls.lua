@@ -20,6 +20,7 @@ null_ls.setup({
 		debounce = 2000,
 		debug = true,
 		formatting.rubocop,
+		formatting.mix,
 		formatting.prettier, -- js/ts formatter
 		formatting.stylua, -- lua formatter
 		diagnostics.eslint_d.with({ -- js/ts linter

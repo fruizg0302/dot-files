@@ -31,6 +31,9 @@ treesitter.setup({
 		"vim",
 		"dockerfile",
 		"gitignore",
+		"elixir", 
+		"heex", 
+		"eex"
 	},
 	-- auto install above language parsers
 	auto_install = true,

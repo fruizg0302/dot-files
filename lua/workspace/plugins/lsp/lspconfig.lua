@@ -37,6 +37,14 @@ local on_attach = function(client, bufnr)
 	keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>", opts) -- show documentation for what is under cursor
 	keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<CR>", opts) -- see outline on right hand side
 
+	-- run the codelens under the cursor
+	keymap.set("n", "<leader>r",  vim.lsp.codelens.run, opts)
+	-- remove the pipe operator
+	keymap.set("n", "<leader>fp", ":ElixirFromPipe<cr>", opts)
+	-- add the pipe operator
+	keymap.set("n", "<leader>tp", ":ElixirToPipe<cr>", opts)
+	keymap.set("v", "<leader>em", ":ElixirExpandMacro<cr>", opts)
+
 	if client.name == "solargraph" then
 		client.server_capabilities.document_formatting = true
 	end
@@ -121,6 +129,17 @@ lspconfig["cssls"].setup({
 lspconfig["tailwindcss"].setup({
 	capabilities = capabilities,
 	on_attach = on_attach,
+})
+
+-- configure elixir lsp server
+lspconfig["elixirls"].setup({
+	cmd = { "/Users/fernandoruiz/.elixir_ls/language_server.sh" },
+	settings = {
+		dialyzerEnabled = true,
+		fetchDeps = false,
+		enableTestLenses = false,
+		suggestSpecs = false,
+	   },
 })
 
 -- configure lua server (with special settings)
