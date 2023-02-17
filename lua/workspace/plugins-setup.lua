@@ -26,8 +26,8 @@ if not status then
 	return
 end
 
-vim.o.updatetime = 100
--- vim.cmd [[autocmd! CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false, scope="cursor"})]]
+vim.o.updatetime = 50
+vim.cmd [[autocmd! CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false, scope="cursor"})]]
 
 -- add list of plugins to install
 return packer.startup(function(use)
@@ -130,4 +130,5 @@ return packer.startup(function(use)
 
 	use("MunifTanjim/nui.nvim")
 	use("mhanberg/elixir.nvim")
+	use("jackMort/ChatGPT.nvim")
 end)
