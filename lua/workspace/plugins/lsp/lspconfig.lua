@@ -38,7 +38,7 @@ local on_attach = function(client, bufnr)
 	keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<CR>", opts) -- see outline on right hand side
 
 	-- run the codelens under the cursor
-	keymap.set("n", "<leader>r",  vim.lsp.codelens.run, opts)
+	keymap.set("n", "<leader>r", vim.lsp.codelens.run, opts)
 	-- remove the pipe operator
 	keymap.set("n", "<leader>fp", ":ElixirFromPipe<cr>", opts)
 	-- add the pipe operator
@@ -58,18 +58,17 @@ local on_attach = function(client, bufnr)
 	vim.api.nvim_create_autocmd("CursorHold", {
 		buffer = bufnr,
 		callback = function()
-		  local opts = {
-			focusable = false,
-			close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
-			border = 'rounded',
-			source = 'always',
-			prefix = ' ',
-			scope = 'cursor',
-		  }
-		  vim.diagnostic.open_float(nil, opts)
-		end
-	  })
-	  
+			local opts = {
+				focusable = false,
+				close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
+				border = "rounded",
+				source = "always",
+				prefix = " ",
+				scope = "cursor",
+			}
+			vim.diagnostic.open_float(nil, opts)
+		end,
+	})
 end
 
 -- used to enable autocompletion (assign to every lsp server config)
@@ -155,11 +154,11 @@ lspconfig["elixirls"].setup({
 		fetchDeps = false,
 		enableTestLenses = false,
 		suggestSpecs = false,
-	   },
+	},
 })
 
 -- configure lua server (with special settings)
-lspconfig["sumneko_lua"].setup({
+lspconfig["lua_ls"].setup({
 	capabilities = capabilities,
 	on_attach = on_attach,
 	settings = { -- custom settings for lua
