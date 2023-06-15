@@ -148,7 +148,7 @@ lspconfig["tailwindcss"].setup({
 
 -- configure elixir lsp server
 lspconfig["elixirls"].setup({
-	cmd = { "/Users/fernandoruizguzman/.elixir_ls/language_server.sh" },
+	cmd = { os.getenv("HOME") .. "/.elixir_ls/language_server.sh" },
 	settings = {
 		dialyzerEnabled = true,
 		fetchDeps = false,
