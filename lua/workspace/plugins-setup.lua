@@ -26,7 +26,7 @@ if not status then
 	return
 end
 
-vim.o.updatetime = 50
+vim.o.updatetime = 25
 vim.cmd([[autocmd! CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false, scope="cursor"})]])
 
 -- add list of plugins to install
@@ -36,10 +36,10 @@ return packer.startup(function(use)
 
 	use("nvim-lua/plenary.nvim") -- lua functions that many plugins use
 
-	use({
-		"svrana/neosolarized.nvim",
-		requires = { "tjdevries/colorbuddy.nvim" },
-	}) -- prefered theme colorscheme
+	--use({
+	--	"svrana/neosolarized.nvim",
+	--	requires = { "tjdevries/colorbuddy.nvim" },
+	--}) -- prefered theme colorscheme
 
 	use("christoomey/vim-tmux-navigator") -- tmux & split window navigation
 
@@ -131,4 +131,5 @@ return packer.startup(function(use)
 	use("MunifTanjim/nui.nvim")
 	use("mhanberg/elixir.nvim")
 	use("jackMort/ChatGPT.nvim")
+	use({ 'rose-pine/neovim', as = 'rose-pine' })
 end)
