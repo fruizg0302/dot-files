@@ -43,6 +43,10 @@ n.setup({
 		telescope = true,
 		notify = false,
 		mini = false,
+		lsp_saga = true,
+		treesitter = true,
+		treesitter_context = true,
+		nvimtree = true
 		-- For more plugins integrations please scroll down (https://github.com/catppuccin/nvim#integrations)
 	},
 })
@@ -97,6 +101,13 @@ n.setup({
 	}
 })
 --]]
+function LineNumberColors()
+    vim.api.nvim_set_hl(0, 'LineNrAbove', { fg='#51B3EC', bold=true })
+    vim.api.nvim_set_hl(0, 'LineNr', { fg="#FFBF00", bold=true })
+    vim.api.nvim_set_hl(0, 'LineNrBelow', { fg='#FB508F', bold=true })
+end
+
+LineNumberColors()
 
 vim.cmd([[colorscheme catppuccin]])
 --configurations for solarized theme
