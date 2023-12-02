@@ -93,6 +93,10 @@ local handlers = {
 		virtual_text = false,
 	}),
 }
+local function custom_root_dir(fname)
+    local util = require('lspconfig.util')
+    return util.root_pattern("Gemfile", ".git", ".rubocop.yml")(fname) or util.path.dirname(fname)
+end
 
 lspconfig["solargraph"].setup({
 	cmd = {
@@ -106,7 +110,7 @@ lspconfig["solargraph"].setup({
 		debounce_text_changes = 150,
 	},
 	on_attach = on_attach,
-	root_dir = lspconfig.util.root_pattern("Gemfile", ".git", "."),
+	root_dir = custom_root_dir,
 	capabilities = capabilities,
 	handlers = handlers,
 	settings = {

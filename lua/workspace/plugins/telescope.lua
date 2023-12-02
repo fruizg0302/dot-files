@@ -10,6 +10,8 @@ if not actions_setup then
 	return
 end
 
+local keymaps = require("workspace.core.keymaps") 
+
 -- configure telescope
 telescope.setup({
 	-- configure custom mappings
@@ -26,13 +28,7 @@ telescope.setup({
         color_devicons = true,
         use_less = true,
         path_display = { "smart" },
-		mappings = {
-			i = {
-				["<C-k>"] = actions.move_selection_previous, -- move to prev result
-				["<C-j>"] = actions.move_selection_next, -- move to next result
-				["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist, -- send selected to quickfixlist
-			},
-		},
+		mappings = keymaps.setup_telescope_mappings(actions),
 	},
 })
 
