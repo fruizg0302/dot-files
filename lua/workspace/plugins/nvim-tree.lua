@@ -18,7 +18,6 @@ nvimtree.setup({
 		adaptive_size = true,
 		centralize_selection = true,
 		width = 30,
-		hide_root_folder = false,
 		side = "left",
 		preserve_window_proportions = false,
 		number = false,
@@ -27,6 +26,7 @@ nvimtree.setup({
 	},
 	renderer = {
 		highlight_opened_files = "all",
+		root_folder_label = false,
 		icons = {
 			glyphs = {
 				folder = {
@@ -77,3 +77,4 @@ nvimtree.setup({
 		},
 	},
 })
+vim.cmd("highlight NvimTreeNormal guibg=NONE")
