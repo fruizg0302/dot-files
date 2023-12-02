@@ -16,8 +16,8 @@ n.setup({
     functions = {},
     variables = {},
     -- Background styles. Can be "dark", "transparent" or "normal"
-    sidebars = "dark", -- style for sidebars, see below
-    floats = "dark", -- style for floating windows
+    sidebars = "transparent", -- style for sidebars, see below
+    floats = "transparent", -- style for floating windows
   },
   sidebars = { "qf", "help" }, -- Set a darker background on sidebar-like windows. For example: `["qf", "vista_kind", "terminal", "packer"]`
   day_brightness = 0.3, -- Adjusts the brightness of the colors of the **Day** style. Number between 0 and 1, from dull to vibrant colors
@@ -37,6 +37,7 @@ n.setup({
   on_highlights = function(highlights, colors) end,
 })
 
+-- Custom function to set line number colors
 function LineNumberColors()
     vim.api.nvim_set_hl(0, 'LineNrAbove', { fg='#51B3EC', bold=true })
     vim.api.nvim_set_hl(0, 'LineNr', { fg="#FFBF00", bold=true })
@@ -46,3 +47,8 @@ end
 LineNumberColors()
 
 vim.cmd([[colorscheme solarized-osaka]])
+
+-- Additional aesthetic customizations
+vim.api.nvim_set_hl(0, 'Normal', { bg = 'NONE' })  -- Set normal background to transparent
+vim.api.nvim_set_hl(0, 'NormalNC', { bg = 'NONE' })  -- Non-current window background
+-- Add more highlight customizations as needed

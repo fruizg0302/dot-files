@@ -14,8 +14,18 @@ end
 telescope.setup({
 	-- configure custom mappings
 	defaults = {
-		layout_strategy = "vertical",
-		layout_config = { height = 0.99 },
+		layout_strategy = "flex",
+		layout_config = {
+            vertical = { width = 0.9 },
+            horizontal = { preview_width = 0.6 },
+        },
+		file_previewer = require('telescope.previewers').vim_buffer_cat.new,
+        grep_previewer = require('telescope.previewers').vim_buffer_vimgrep.new,
+        winblend = 15,
+        borderchars = { '─', '│', '─', '│', '╭', '╮', '╯', '╰' },
+        color_devicons = true,
+        use_less = true,
+        path_display = { "smart" },
 		mappings = {
 			i = {
 				["<C-k>"] = actions.move_selection_previous, -- move to prev result

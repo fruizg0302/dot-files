@@ -4,6 +4,15 @@ if not status then
 	return
 end
 
+local function lsp_status()
+  local clients = vim.lsp.buf_get_clients()
+  if next(clients) ~= nil then
+    return ' LSP'
+  else
+    return ''
+  end
+end
+
 -- get lualine nightfly theme
 local lualine_nightfly = require("lualine.themes.nightfly")
 
@@ -32,33 +41,19 @@ lualine_nightfly.command = {
 lualine.setup({
 	options = {
 		icons_enabled = true,
-		theme = "solarized_dark",
-		section_separators = { left = "", right = "" },
-		component_separators = { left = "", right = "" },
+		section_separators = { left = '', right = ''},
+        component_separators = { left = '', right = ''},
 		disabled_filetypes = {},
+		theme = lualine_nightfly,
 	},
-	sections = {
-		lualine_a = { "mode" },
-		lualine_b = { "branch" },
-		lualine_c = {
-			{
-				"filename",
-				file_status = true, -- displays file status (readonly status, modified status)
-				path = 0, -- 0 = just filename, 1 = relative path, 2 = absolute path
-			},
-		},
-		lualine_x = {
-			{
-				"diagnostics",
-				sources = { "nvim_diagnostic" },
-				symbols = { error = " ", warn = " ", info = " ", hint = " " },
-			},
-			"encoding",
-			"filetype",
-		},
-		lualine_y = { "progress" },
-		lualine_z = { "location" },
-	},
+    sections = {
+        lualine_a = { 'mode' },
+        lualine_b = { 'branch', 'diff', { 'diagnostics', sources = { 'nvim_diagnostic' } } },
+        lualine_c = { {'filename', file_status = true, path = 1 } },
+        lualine_x = { 'encoding', 'fileformat', 'filetype' },
+        lualine_y = { lsp_status },
+        lualine_z = { 'progress', 'location' },
+    },
 	inactive_sections = {
 		lualine_a = {},
 		lualine_b = {},

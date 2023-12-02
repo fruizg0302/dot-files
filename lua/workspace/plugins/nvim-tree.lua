@@ -77,4 +77,13 @@ nvimtree.setup({
 		},
 	},
 })
+vim.cmd("highlight NvimTreeFolderIcon guifg=#3FC5FF")
+vim.cmd("highlight NvimTreeFolderName guifg=#51B3EC")
+vim.cmd("highlight NvimTreeOpenedFolderName guifg=#FB508F")
+vim.cmd("highlight NvimTreeEmptyFolderName guifg=#657b83")
+vim.cmd("highlight NvimTreeFileDeleted guifg=#FF0000")
+vim.cmd("highlight NvimTreeFileDirty guifg=#FFCC00")
+vim.cmd("highlight NvimTreeFileStaged guifg=#00FF00")
+
 vim.cmd("highlight NvimTreeNormal guibg=NONE")
+vim.cmd("highlight NvimTreeNormalNC guibg=NONE")

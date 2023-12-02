@@ -11,6 +11,13 @@ local diagnostics = null_ls.builtins.diagnostics -- to setup linters
 -- to setup format on save
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
+local rubocop = null_ls.builtins.formatting.rubocop.with({
+    extra_args = { "-a" },  -- Enable autocorrect
+    condition = function(utils)
+        return utils.root_has_file({ ".rubocop.yml", "rubocop.yml", ".rubocop.yml.erb" })
+    end,
+})
+
 -- configure null_ls
 null_ls.setup({
 	-- setup formatters & linters
@@ -24,6 +31,7 @@ null_ls.setup({
                 return utils.root_has_file({ ".rubocop.yml", "rubocop.yml", ".rubocop.yml.erb" })
             end,
         }),
+		rubocop,
 		formatting.mix,
 		formatting.prettier, -- js/ts formatter
 		formatting.stylua, -- lua formatter

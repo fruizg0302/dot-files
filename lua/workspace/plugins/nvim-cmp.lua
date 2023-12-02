@@ -37,6 +37,13 @@ local source_mapping = {
 -- load vs-code like snippets from plugins (e.g. friendly-snippets)
 require("luasnip/loaders/from_vscode").lazy_load()
 
+local ls = require("luasnip")
+ls.snippets = {
+  ruby = {
+    ls.parser.parse_snippet("meth", "def $1($2)\n\t$0\nend"),
+  },
+}
+
 vim.opt.completeopt = "menu,menuone,noselect"
 
 cmp.setup({
@@ -46,6 +53,15 @@ cmp.setup({
 		end,
 	},
 	mapping = cmp.mapping.preset.insert({
+		["<Tab>"] = function(fallback)
+			if cmp.visible() then
+				cmp.select_next_item()
+			elseif luasnip.expand_or_jumpable() then
+				luasnip.expand_or_jump()
+			else
+			fallback()  -- Regular tab behavior
+			end
+		end,
 		["<C-k>"] = cmp.mapping.select_prev_item(), -- previous suggestion
 		["<C-j>"] = cmp.mapping.select_next_item(), -- next suggestion
 		["<C-b>"] = cmp.mapping.scroll_docs(-4),
@@ -105,3 +121,10 @@ cmp.setup({
 	  end,
 	},
 })
+
+vim.cmd [[
+  highlight Pmenu guibg=#1E1E1E guifg=#C5CDD9
+  highlight PmenuSel guibg=#569CD6 guifg=#1E1E1E
+  highlight PmenuSbar guibg=#262626
+  highlight PmenuThumb guibg=#C5CDD9
+]]

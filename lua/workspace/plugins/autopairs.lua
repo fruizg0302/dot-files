@@ -34,6 +34,7 @@ local endwise = require("nvim-autopairs.ts-rule").endwise
 
 autopairs.add_rules(
     {
+		endwise(" do$", "end", "ruby", nil),
         endwise(" do$", "end", "elixir", nil)
     }
 )

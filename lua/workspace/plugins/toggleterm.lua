@@ -100,6 +100,12 @@ end
 
 local float_term = Terminal:new({
 	direction = "float",
+	float_opts = {
+		winblend = 10,
+        border = "curved",
+        width = vim.o.columns * 0.8,
+        height = vim.o.lines * 0.6,
+    },
 	on_open = function(term)
 		vim.cmd("startinsert!")
 		vim.api.nvim_buf_set_keymap(
