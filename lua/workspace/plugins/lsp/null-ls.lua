@@ -19,7 +19,11 @@ null_ls.setup({
 		--  "formatting.prettier.with({disabled_filetypes: {}})" (see null-ls docs)
 		debounce = 2000,
 		debug = true,
-		formatting.rubocop,
+		        formatting.rubocop.with({
+            condition = function(utils)
+                return utils.root_has_file({ ".rubocop.yml", "rubocop.yml", ".rubocop.yml.erb" })
+            end,
+        }),
 		formatting.mix,
 		formatting.prettier, -- js/ts formatter
 		formatting.stylua, -- lua formatter

@@ -88,11 +88,6 @@ lspconfig["html"].setup({
 	on_attach = on_attach,
 })
 
-lspconfig["ruby_ls"].setup({
-	capabilities = capabilities,
-	on_attach = on_attach,
-})
-
 local handlers = {
 	["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
 		virtual_text = true,
