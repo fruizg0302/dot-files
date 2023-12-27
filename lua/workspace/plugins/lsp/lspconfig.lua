@@ -22,19 +22,17 @@ local keymap = vim.keymap -- for conciseness
 local on_attach = function(client, bufnr)
 	-- keybind options
 	local opts = { noremap = true, silent = true, buffer = bufnr }
-
 	-- set keybinds
-	keymap.set("n", "gf", "<cmd>Lspsaga lsp_finder<CR>", opts) -- show definition, references
-	keymap.set("n", "gD", "<Cmd>lua vim.lsp.buf.declaration()<CR>", opts) -- got to declaration
-	keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>", opts) -- see definition and make edits in window
-	keymap.set("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts) -- go to implementation
-	keymap.set("n", "<leader>ca", "<cmd>Lspsaga code_action<CR>", opts) -- see available code actions
-	keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<CR>", opts) -- smart rename
-	keymap.set("n", "<leader>D", "<cmd>Lspsaga show_line_diagnostics<CR>", opts) -- show  diagnostics for line
-	keymap.set("n", "<leader>d", "<cmd>Lspsaga show_cursor_diagnostics<CR>", opts) -- show diagnostics for cursor
-	keymap.set("n", "[d", "<cmd>Lspsaga diagnostic_jump_prev<CR>", opts) -- jump to previous diagnostic in buffer
-	keymap.set("n", "]d", "<cmd>Lspsaga diagnostic_jump_next<CR>", opts) -- jump to next diagnostic in buffer
-	keymap.set("n", "<leader>sd", "<cmd>Lspsaga hover_doc<CR>", opts) -- show documentation for what is under cursor
+
+	--lsp saga configuration
+	keymap.set("n", "<C-j>", "<Cmd>Lspsaga diagnostic_jump_next<CR>", opts)
+	keymap.set("i", "<C-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
+	keymap.set("n", "<leader>gp", "<Cmd>Lspsaga peek_definition<CR>", opts)
+	keymap.set("n", "<leader>gr", "<Cmd>Lspsaga rename<CR>", opts)
+	keymap.set("n", "<leader>ltt", "<Cmd>Lspsaga term_toggle<CR>", opts)
+	keymap.set("n", "<leader>gf", "<cmd>Lspsaga lsp_finder<CR>", opts) -- show definition, references
+	keymap.set('n', '<leader>gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts) -- go to definition
+	keymap.set('n', '<leader>gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts) -- go to declaration
 	keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<CR>", opts) -- see outline on right hand side
 
 	-- run the codelens under the cursor
@@ -45,9 +43,6 @@ local on_attach = function(client, bufnr)
 	keymap.set("n", "<leader>tp", ":ElixirToPipe<cr>", opts)
 	keymap.set("v", "<leader>em", ":ElixirExpandMacro<cr>", opts)
 
-	if client.name == "solargraph" then
-		client.server_capabilities.document_formatting = true
-	end
 	-- typescript specific keymaps (e.g. rename file and update imports)
 	if client.name == "tsserver" then
 		keymap.set("n", "<leader>rf", ":TypescriptRenameFile<CR>") -- rename file and update imports
@@ -95,8 +90,11 @@ local handlers = {
 }
 local function custom_root_dir(fname)
     local util = require('lspconfig.util')
-    return util.root_pattern("Gemfile", ".git", ".rubocop.yml")(fname) or util.path.dirname(fname)
+    -- Search for root directory based on given patterns
+    return util.root_pattern("Gemfile", ".git", ".rubocop.yml")(fname)
+           or util.path.dirname(fname)
 end
+
 
 lspconfig["solargraph"].setup({
 	cmd = {

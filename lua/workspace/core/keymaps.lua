@@ -66,6 +66,8 @@ keymap.set("n", "<leader>rs", ":LspRestart<CR>") -- mapping to restart lsp if ne
 keymap.set("t", "<esc>", [[<C-\><C-n>]])
 keymap.set("t", "jk", [[<C-\><C-n>]])
 
+
+
 local M = {}
 
 M.setup_telescope_mappings = function(actions)
