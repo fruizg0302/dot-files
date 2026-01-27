@@ -53,6 +53,7 @@ return {
         -- TypeScript/JavaScript
         "typescript-language-server",
         "eslint-lsp",
+        "eslint_d",
         "prettier",
         -- HTML/CSS
         "html-lsp",
@@ -74,15 +75,23 @@ return {
       formatters_by_ft = {
         ruby = { "rubocop" },
         eruby = { "erb_lint" },
-        javascript = { "prettier" },
-        javascriptreact = { "prettier" },
-        typescript = { "prettier" },
-        typescriptreact = { "prettier" },
+        javascript = { "eslint_d", "prettier" },
+        javascriptreact = { "eslint_d", "prettier" },
+        typescript = { "eslint_d", "prettier" },
+        typescriptreact = { "eslint_d", "prettier" },
         css = { "prettier" },
         scss = { "prettier" },
         html = { "prettier" },
         json = { "prettier" },
         yaml = { "prettier" },
+      },
+      formatters = {
+        rubocop = {
+          args = { "-a", "-f", "quiet", "--stderr", "--stdin", "$FILENAME" },
+        },
+        eslint_d = {
+          args = { "--fix-to-stdout", "--stdin", "--stdin-filename", "$FILENAME" },
+        },
       },
     },
   },
