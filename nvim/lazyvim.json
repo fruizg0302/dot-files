@@ -8,7 +8,8 @@
     "lazyvim.plugins.extras.formatting.prettier",
     "lazyvim.plugins.extras.linting.eslint",
     "lazyvim.plugins.extras.util.octo",
-    "lazyvim.plugins.extras.test.core"
+    "lazyvim.plugins.extras.test.core",
+    "lazyvim.plugins.extras.lang.docker"
   ],
   "install_version": 7,
   "news": {
