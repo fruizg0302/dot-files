@@ -53,7 +53,6 @@ return {
         -- TypeScript/JavaScript
         "typescript-language-server",
         "eslint-lsp",
-        "eslint_d",
         "prettier",
         -- HTML/CSS
         "html-lsp",
@@ -75,23 +74,15 @@ return {
       formatters_by_ft = {
         ruby = { "rubocop" },
         eruby = { "erb_lint" },
-        javascript = { "eslint_d", "prettier" },
-        javascriptreact = { "eslint_d", "prettier" },
-        typescript = { "eslint_d", "prettier" },
-        typescriptreact = { "eslint_d", "prettier" },
+        javascript = { "prettier" },
+        javascriptreact = { "prettier" },
+        typescript = { "prettier" },
+        typescriptreact = { "prettier" },
         css = { "prettier" },
         scss = { "prettier" },
         html = { "prettier" },
         json = { "prettier" },
         yaml = { "prettier" },
-      },
-      formatters = {
-        rubocop = {
-          args = { "-a", "-f", "quiet", "--stderr", "--stdin", "$FILENAME" },
-        },
-        eslint_d = {
-          args = { "--fix-to-stdout", "--stdin", "--stdin-filename", "$FILENAME" },
-        },
       },
     },
   },
@@ -117,9 +108,11 @@ return {
   {
     "windwp/nvim-ts-autotag",
     opts = {
-      enable_close = true,
-      enable_rename = true,
-      enable_close_on_slash = true,
+      opts = {
+        enable_close = true,
+        enable_rename = true,
+        enable_close_on_slash = true,
+      },
       per_filetype = {
         ["eruby"] = { enable_close = true },
       },
