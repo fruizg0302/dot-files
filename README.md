@@ -5,20 +5,35 @@ Personal configuration for zsh, Neovim, oh-my-posh, and ripgrep. The Neovim setu
 ## Installation
 
 ```bash
-# Clone the repository
+# Clone the repository. The path is up to you — machines in use have it at
+# both ~/dot-files and ~/workspace/PERSONAL/Config/dot-files.
 git clone https://github.com/fruizg0302/dot-files.git ~/dot-files
+DOTFILES=~/dot-files
 
 # Symlink configs
-ln -s ~/dot-files/zsh/zshrc ~/.zshrc
-ln -s ~/dot-files/nvim ~/.config/nvim
-ln -s ~/dot-files/oh-my-posh ~/.config/oh-my-posh
-ln -s ~/dot-files/ripgrep ~/.config/ripgrep
+ln -sfn "$DOTFILES/zsh/zshrc" ~/.zshrc
+ln -sfn "$DOTFILES/oh-my-posh" ~/.config/oh-my-posh
+ln -sfn "$DOTFILES/ripgrep" ~/.config/ripgrep
+
+# Neovim runs under the `lazyvim` app-name: the shell exports
+# NVIM_APPNAME=lazyvim, so plain `nvim` loads this config from ~/.config/lazyvim
+# and keeps its data in ~/.local/share/lazyvim. Linking ~/.config/nvim as well
+# is harmless and makes the config work with NVIM_APPNAME unset.
+ln -sfn "$DOTFILES/nvim" ~/.config/lazyvim
+ln -sfn "$DOTFILES/nvim" ~/.config/nvim
 
 # Start Neovim (plugins install automatically)
 nvim
 ```
 
+<<<<<<< HEAD
 Machine-specific secrets and overrides go in `~/.zshrc.local` (sourced at the end of `zshrc`, never tracked). Secrets live in the macOS Keychain and are read with `security find-generic-password`.
+
+Machine-specific secrets and overrides go in `~/.zshrc.local` (sourced at the end of `zshrc`, never tracked). Secrets live in the macOS Keychain and are read with `security find-generic-password`.
+
+> **Note:** Because of `NVIM_APPNAME=lazyvim`, Neovim reads `~/.config/lazyvim`
+> and stores data under `~/.local/share/lazyvim`. If the repo moves and this
+> symlink is left dangling, `nvim` silently falls back to the vanilla editor.
 
 **Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/), and for the zsh config: oh-my-posh, fzf, fd, bat, eza, zoxide, direnv, mise, zsh-autosuggestions, zsh-syntax-highlighting (all via Homebrew)
 

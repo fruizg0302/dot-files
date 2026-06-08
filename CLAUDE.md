@@ -17,7 +17,21 @@ Live configs are symlinks into this repo: `~/.zshrc`, `~/.config/nvim`, `~/.conf
   - `nvim/lua/plugins/` - Plugin specifications
   - `nvim/lazyvim.json` - LazyVim extras configuration
 
-The `nvim/` directory is symlinked to `~/.config/nvim/`. The repo lives at `~/dot-files`.
+The `nvim/` directory is symlinked into place. The repo path is machine-local
+(`~/dot-files` on some machines, `~/workspace/PERSONAL/Config/dot-files` on
+others), so prefer relative references over hardcoding it.
+
+The shell exports `NVIM_APPNAME=lazyvim`. Both `~/.config/nvim` and
+`~/.config/lazyvim` may point at `nvim/` — they share one *config* but get
+separate *data* dirs:
+
+- `NVIM_APPNAME=lazyvim` → data in `~/.local/share/lazyvim/` (Mason packages live here)
+- plain `nvim` → data in `~/.local/share/nvim/` (no Mason packages)
+
+Because of this, plugin specs that reference a Mason binary should use an
+absolute `~/.local/share/lazyvim/mason/bin/...` path so they keep working under
+either app-name. If the repo moves and `~/.config/lazyvim` is left dangling,
+`nvim` silently falls back to the vanilla editor.
 
 ## Key Bindings (Space as Leader)
 
