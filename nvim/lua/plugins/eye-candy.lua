@@ -31,7 +31,7 @@ return {
 
   -- Animated indent scope indicator
   {
-    "echasnovski/mini.indentscope",
+    "nvim-mini/mini.indentscope",
     version = false,
     event = "LazyFile",
     opts = {
@@ -103,7 +103,7 @@ return {
 
   -- Smooth cursor/window/resize animations
   {
-    "echasnovski/mini.animate",
+    "nvim-mini/mini.animate",
     event = "VeryLazy",
     opts = function()
       local animate = require("mini.animate")
@@ -299,7 +299,7 @@ return {
 
   -- Better icons
   {
-    "echasnovski/mini.icons",
+    "nvim-mini/mini.icons",
     lazy = true,
     opts = {},
     init = function()
