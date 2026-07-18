@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a Neovim configuration repository using LazyVim framework, optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
+Personal dotfiles: zsh (`zsh/zshrc`), oh-my-posh themes (`oh-my-posh/`), ripgrep (`ripgrep/`), and a Neovim configuration using the LazyVim framework, optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
+
+Live configs are symlinks into this repo: `~/.zshrc`, `~/.config/nvim`, `~/.config/oh-my-posh`, `~/.config/ripgrep`. Machine-local secrets stay in `~/.zshrc.local` (untracked); never add secrets or internal hostnames here — the repo is public.
 
 ## Architecture
 
@@ -15,7 +17,7 @@ This is a Neovim configuration repository using LazyVim framework, optimized for
   - `nvim/lua/plugins/` - Plugin specifications
   - `nvim/lazyvim.json` - LazyVim extras configuration
 
-The `nvim/` directory is symlinked to `~/.config/nvim/`.
+The `nvim/` directory is symlinked to `~/.config/nvim/`. The repo lives at `~/dot-files`.
 
 ## Key Bindings (Space as Leader)
 

@@ -1,21 +1,26 @@
 # Dotfiles
 
-Neovim configuration built on [LazyVim](https://www.lazyvim.org/), optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
+Personal configuration for zsh, Neovim, oh-my-posh, and ripgrep. The Neovim setup is built on [LazyVim](https://www.lazyvim.org/), optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/dot-files.git ~/dot-files
+git clone https://github.com/fruizg0302/dot-files.git ~/dot-files
 
-# Symlink nvim config
+# Symlink configs
+ln -s ~/dot-files/zsh/zshrc ~/.zshrc
 ln -s ~/dot-files/nvim ~/.config/nvim
+ln -s ~/dot-files/oh-my-posh ~/.config/oh-my-posh
+ln -s ~/dot-files/ripgrep ~/.config/ripgrep
 
 # Start Neovim (plugins install automatically)
 nvim
 ```
 
-**Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/)
+Machine-specific secrets and overrides go in `~/.zshrc.local` (sourced at the end of `zshrc`, never tracked). Secrets live in the macOS Keychain and are read with `security find-generic-password`.
+
+**Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/), and for the zsh config: oh-my-posh, fzf, fd, bat, eza, zoxide, direnv, mise, zsh-autosuggestions, zsh-syntax-highlighting (all via Homebrew)
 
 ## Features
 
@@ -48,7 +53,7 @@ nvim
 - `claudecode.nvim` - Claude Code integration
 
 **Theme**
-- Catppuccin Frappe
+- token (ThorstenRhau/token), with Catppuccin Frappe available
 
 ## Key Bindings
 
@@ -101,6 +106,14 @@ Enabled extras (configured in `lazyvim.json`):
 ## Structure
 
 ```
+zsh/
+└── zshrc                 # Shell config (history, aliases, fzf, cached tool inits)
+oh-my-posh/
+├── atomic.omp.json       # Prompt theme
+├── claude-statusline.omp.json
+└── developer.omp.json
+ripgrep/
+└── config                # Smart-case, max filesize, custom file types
 nvim/
 ├── init.lua              # Entry point
 ├── lazyvim.json          # LazyVim extras config

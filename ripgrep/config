@@ -1,0 +1,13 @@
+# Smart case: case-insensitive unless pattern has uppercase
+--smart-case
+
+# Skip files larger than 1MB (avoids minified JS, SQL dumps, etc.)
+--max-filesize=1M
+
+# Custom type definitions for your stack
+--type-add=erb:*.erb
+--type-add=erb:*.html.erb
+--type-add=heex:*.heex
+--type-add=eex:*.eex
+--type-add=ex:*.ex
+--type-add=ex:*.exs

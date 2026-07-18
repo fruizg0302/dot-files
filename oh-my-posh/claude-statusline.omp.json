@@ -1,0 +1,101 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 3,
+  "palette": {
+    "claude-orange": "#da7756",
+    "claude-coral": "#C15F3C",
+    "claude-warm": "#E67D22",
+    "marble": "#a8a29e",
+    "marble-light": "#d6d3d1",
+    "stone": "#78716c",
+    "warm-stone": "#8c8479",
+    "sand": "#c2b8a3",
+    "soft-cream": "#e7e5e4",
+    "muted-cream": "#d4d0c8",
+    "success": "#86efac",
+    "warning": "#fcd34d",
+    "danger": "#fca5a5"
+  },
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "text",
+          "style": "diamond",
+          "foreground": "p:soft-cream",
+          "background": "p:claude-orange",
+          "leading_diamond": "\ue0b6",
+          "trailing_diamond": "\ue0b4",
+          "template": " \U000f09a8 "
+        },
+        {
+          "type": "claude",
+          "style": "diamond",
+          "foreground": "p:soft-cream",
+          "background": "p:claude-coral",
+          "leading_diamond": "\ue0b6",
+          "trailing_diamond": "\ue0b0",
+          "template": " {{ .Model.DisplayName }} "
+        },
+        {
+          "type": "claude",
+          "style": "diamond",
+          "foreground": "p:marble-light",
+          "background": "p:stone",
+          "foreground_templates": [
+            "{{ if gt .TokenUsagePercent.Value 80.0 }}p:danger{{ end }}",
+            "{{ if and (gt .TokenUsagePercent.Value 60.0) (le .TokenUsagePercent.Value 80.0) }}p:warning{{ end }}"
+          ],
+          "trailing_diamond": "\ue0b0",
+          "template": " {{ .TokenUsagePercent.Gauge }} {{ .FormattedTokens }} "
+        },
+        {
+          "type": "claude",
+          "style": "diamond",
+          "foreground": "p:success",
+          "background": "p:warm-stone",
+          "trailing_diamond": "\ue0b4",
+          "template": " \uf155 {{ .FormattedCost }} "
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "right",
+      "segments": [
+        {
+          "type": "git",
+          "style": "diamond",
+          "foreground": "p:soft-cream",
+          "background": "p:claude-coral",
+          "background_templates": [
+            "{{ if or (.Working.Changed) (.Staging.Changed) }}p:claude-warm{{ end }}"
+          ],
+          "leading_diamond": "\ue0b6",
+          "trailing_diamond": "\ue0b4",
+          "properties": {
+            "fetch_status": true,
+            "branch_icon": "\ue725 "
+          },
+          "template": " {{ .HEAD }}{{ if .Working.Changed }} +{{ .Working.Added }} ~{{ .Working.Modified }}{{ end }}{{ if .Staging.Changed }} \uf046{{ end }} "
+        },
+        {
+          "type": "path",
+          "style": "diamond",
+          "foreground": "p:marble-light",
+          "background": "p:stone",
+          "leading_diamond": " \ue0b6",
+          "trailing_diamond": "\ue0b4",
+          "properties": {
+            "style": "unique",
+            "max_depth": 2
+          },
+          "template": " \uf07b {{ .Path }} "
+        }
+      ]
+    }
+  ],
+  "final_space": false
+}

@@ -1,0 +1,178 @@
+# ~/.zshrc
+
+# ------------------------------------------------------------------------------
+# OH-MY-POSH (cached for faster startup)
+# ------------------------------------------------------------------------------
+_omp_cache="$HOME/.cache/oh-my-posh-init.zsh"
+if [[ ! -f "$_omp_cache" || "$HOME/.config/oh-my-posh/atomic.omp.json" -nt "$_omp_cache" || "${commands[oh-my-posh]}" -nt "$_omp_cache" ]]; then
+  oh-my-posh init zsh --config "$HOME/.config/oh-my-posh/atomic.omp.json" > "$_omp_cache"
+fi
+source "$_omp_cache"
+
+# ------------------------------------------------------------------------------
+# HISTORY
+# ------------------------------------------------------------------------------
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_REDUCE_BLANKS
+setopt HIST_IGNORE_SPACE
+setopt EXTENDED_HISTORY      # record command timestamps
+setopt HIST_VERIFY           # expand history (!!) onto the line before running
+setopt HIST_FIND_NO_DUPS     # skip dupes when cycling through history search
+
+# ------------------------------------------------------------------------------
+# ZSH OPTIONS
+# ------------------------------------------------------------------------------
+setopt AUTO_CD
+setopt CORRECT
+setopt INTERACTIVE_COMMENTS
+setopt AUTO_PUSHD            # cd pushes onto the dir stack
+setopt PUSHD_IGNORE_DUPS     # no duplicate entries on the stack
+setopt PUSHD_SILENT          # don't print the stack after pushd/popd
+
+# ------------------------------------------------------------------------------
+# ENVIRONMENT
+# ------------------------------------------------------------------------------
+export EDITOR="nvim"
+export VISUAL="nvim"
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+export GOPATH=$HOME/go-workspace
+export CLAUDE_CODE_NO_FLICKER=1
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export LDFLAGS="-L/opt/homebrew/opt/llvm/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
+
+# FZF
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_DEFAULT_OPTS='--height=40% --layout=reverse --border'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:200 {}'"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+export FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --icons {}'"
+
+# PATH (typeset -U deduplicates)
+typeset -U path
+path=(
+  "$GOPATH/bin"
+  "$HOME/bin"
+  "$HOME/.local/bin"
+  "/opt/homebrew/opt/libpq/bin"
+  "$HOME/.antigravity/antigravity/bin"
+  $path
+)
+export PATH
+
+# ------------------------------------------------------------------------------
+# ALIASES
+# ------------------------------------------------------------------------------
+# Navigation
+alias wks='cd /Volumes/MacintoshEDD/workspace'
+
+# Docker
+alias dc='docker compose'
+alias dps='docker compose ps'
+alias dl='docker logs -f'
+alias dex='docker exec -it'
+alias dstat='docker stats --no-stream'
+alias docker-clean='docker system prune -af --volumes'
+
+# Git
+alias g='git'
+alias ga='git add'
+alias gc='git commit'
+alias gs='git status'
+alias gco='git checkout'
+alias gl='git log --oneline --graph --decorate'
+
+# Search
+alias rg='rg --smart-case'
+alias grep='rg --smart-case'
+
+# Modern replacements
+alias ls='eza --icons --group-directories-first'
+alias ll='eza -la --icons --group-directories-first --git'
+alias tree='eza --tree --icons'
+alias cat='bat --plain'
+alias less='bat --paging=always'
+
+# ------------------------------------------------------------------------------
+# FUNCTIONS
+# ------------------------------------------------------------------------------
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
+# ------------------------------------------------------------------------------
+# ZSH COMPLETIONS (cached — rebuilds once every 24h)
+# ------------------------------------------------------------------------------
+autoload -Uz compinit
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+  touch ~/.zcompdump    # compinit only rewrites the dump on changes; reset the 24h clock ourselves
+else
+  compinit -C
+fi
+
+# Completion styling
+zmodload zsh/complist
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'l:|=* r:|=*'  # case-insensitive + partial
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%F{yellow}%d%f'
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path "$HOME/.cache/zcompcache"
+
+# ------------------------------------------------------------------------------
+# TOOL INITIALIZATIONS
+# ------------------------------------------------------------------------------
+# Cached init helper — regenerates when the tool's binary updates
+_cached_init() {
+  local cache="$HOME/.cache/zsh-init-$1.zsh"
+  [[ -f "$cache" && ! "${commands[$1]}" -nt "$cache" ]] || "$@" > "$cache"
+  source "$cache"
+}
+
+# FZF
+_cached_init fzf --zsh
+
+# Zsh plugins
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+_autosuggest_or_complete() {
+  if [[ -n "$POSTDISPLAY" ]]; then
+    zle autosuggest-accept
+  else
+    zle expand-or-complete
+  fi
+}
+zle -N _autosuggest_or_complete
+bindkey '\t' _autosuggest_or_complete
+
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Direnv
+_cached_init direnv hook zsh
+
+# Zoxide
+_cached_init zoxide init zsh
+
+# Mise (cached for faster startup) — should be last
+_mise_cache="$HOME/.cache/mise-activate.zsh"
+if [[ ! -f "$_mise_cache" || "$HOME/.local/bin/mise" -nt "$_mise_cache" ]]; then
+  "$HOME/.local/bin/mise" activate zsh > "$_mise_cache"
+fi
+source "$_mise_cache"
+
+# ------------------------------------------------------------------------------
+# LOCAL OVERRIDES (secrets, machine-specific config — not tracked)
+# ------------------------------------------------------------------------------
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
