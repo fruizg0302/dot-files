@@ -6,10 +6,11 @@ return {
       flavour = "frappe",
     },
   },
+  { "ThorstenRhau/token" },
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "catppuccin",
+      colorscheme = "token",
     },
   },
 }
