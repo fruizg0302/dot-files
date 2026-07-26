@@ -26,13 +26,48 @@ ln -sfn "$DOTFILES/nvim" ~/.config/nvim
 nvim
 ```
 
-Machine-specific secrets and overrides go in `~/.zshrc.local` (sourced at the end of `zshrc`, never tracked). Secrets live in the macOS Keychain and are read with `security find-generic-password`.
-
 > **Note:** Because of `NVIM_APPNAME=lazyvim`, Neovim reads `~/.config/lazyvim`
 > and stores data under `~/.local/share/lazyvim`. If the repo moves and this
 > symlink is left dangling, `nvim` silently falls back to the vanilla editor.
 
-**Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/), and for the zsh config: oh-my-posh, fzf, fd, bat, eza, zoxide, direnv, mise, zsh-autosuggestions, zsh-syntax-highlighting (all via Homebrew)
+## Machine-local configuration (`~/.zshrc.local`)
+
+`zsh/zshrc` is shared across machines. Anything private, host-specific, or
+path-dependent goes in `~/.zshrc.local`, which is never tracked and is sourced
+at the very end — so it also wins on any conflict.
+
+**This repo is public.** Secrets, and anything naming internal infrastructure
+(hosts, client projects, registry credentials), must not go in the tracked
+zshrc. Secret *values* live in the macOS Keychain and are read on demand with
+`security find-generic-password` — never written to disk in either file.
+
+### After pulling on a machine that isn't the one this was set up on
+
+Two things are worth checking:
+
+**1. Set `WORKSPACE` if your code doesn't live in `~/workspace`.** `wks` and any
+project shortcuts resolve through it. The tracked default is `$HOME/workspace`,
+so on a machine that keeps its workspace elsewhere (an external volume, for
+example) add:
+
+```zsh
+# ~/.zshrc.local
+WORKSPACE=/Volumes/YourVolume/workspace
+```
+
+This replaced a hardcoded `wks` alias that pointed at one machine's external
+drive and silently did nothing everywhere else.
+
+**2. The prompt degrades on purpose.** `zshrc` uses oh-my-posh when it's
+installed *and* `~/.config/oh-my-posh/atomic.omp.json` resolves, and otherwise
+falls back to starship. A machine with neither gets no prompt, so install at
+least one. Every other optional tool is guarded the same way through the
+`_cached_init` helper, which returns early when the tool is missing — so a
+partially-provisioned machine still boots a working shell instead of erroring.
+
+**Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/), and a prompt (oh-my-posh *or* starship).
+
+Optional, each independently guarded — install what you use: fzf, fd, bat, eza, zoxide, direnv, atuin, mise, lazygit, yazi, zsh-autosuggestions, zsh-syntax-highlighting (all via Homebrew).
 
 ## Features
 
