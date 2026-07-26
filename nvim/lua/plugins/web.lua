@@ -37,6 +37,12 @@ return {
         emmet_ls = {
           filetypes = { "html", "css", "scss", "javascript", "javascriptreact", "typescript", "typescriptreact", "eruby" },
         },
+        -- The standalone RuboCop server runs from Mason's own gem path, so it
+        -- can't resolve `inherit_gem:` (rubocop-rails-omakase and friends) and
+        -- dies with exit 2 on any modern Rails project. ruby-lsp already ships
+        -- a RuboCop addon that runs inside the project bundle, at the version
+        -- the project actually pins — so this one is both broken and redundant.
+        rubocop = false,
       },
     },
   },
@@ -46,9 +52,9 @@ return {
     "mason-org/mason.nvim",
     opts = {
       ensure_installed = {
-        -- Ruby/Rails
+        -- Ruby/Rails. RuboCop deliberately absent: ruby-lsp's addon supplies it
+        -- from the project bundle (see the lspconfig block above).
         "solargraph",
-        "rubocop",
         "erb-lint",
         -- TypeScript/JavaScript
         "typescript-language-server",
@@ -72,7 +78,9 @@ return {
     "stevearc/conform.nvim",
     opts = {
       formatters_by_ft = {
-        ruby = { "rubocop" },
+        -- No conform formatter for Ruby: it would shell out to Mason's rubocop
+        -- and hit the same `inherit_gem:` failure. Falling through to LSP
+        -- formatting hands it to ruby-lsp, which resolves the project bundle.
         eruby = { "erb_lint" },
         javascript = { "prettier" },
         javascriptreact = { "prettier" },
