@@ -119,7 +119,21 @@ export PATH
 # a variable with a sane default — override WORKSPACE in ~/.zshrc.local
 # (e.g. when it lives on an external volume).
 : ${WORKSPACE:="$HOME/workspace"}
-alias wks='cd "$WORKSPACE"'
+
+# A function rather than an alias so it can explain itself: when WORKSPACE
+# lives on an external volume (directly or via a symlink into /Volumes), an
+# unmounted drive otherwise gives a bare "no such file or directory" that
+# doesn't hint at the actual cause.
+wks() {
+  if [[ ! -d "$WORKSPACE" ]]; then
+    print -u2 "wks: WORKSPACE does not resolve: $WORKSPACE"
+    if [[ -L "$WORKSPACE" ]]; then
+      print -u2 "wks: dangling symlink -> $(readlink "$WORKSPACE") — volume not mounted?"
+    fi
+    return 1
+  fi
+  cd "$WORKSPACE"
+}
 
 # Docker
 alias dc='docker compose'
