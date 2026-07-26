@@ -1,13 +1,39 @@
 # ~/.zshrc
+#
+# Shared across machines. Anything private, host-specific, or path-dependent
+# belongs in ~/.zshrc.local (sourced at the very end, never tracked).
+#
+# Optional tools are guarded with `(( $+commands[x] ))` so this file stays safe
+# on a machine where a given tool isn't installed yet.
 
 # ------------------------------------------------------------------------------
-# OH-MY-POSH (cached for faster startup)
+# CACHED INIT HELPER
 # ------------------------------------------------------------------------------
-_omp_cache="$HOME/.cache/oh-my-posh-init.zsh"
-if [[ ! -f "$_omp_cache" || "$HOME/.config/oh-my-posh/atomic.omp.json" -nt "$_omp_cache" || "${commands[oh-my-posh]}" -nt "$_omp_cache" ]]; then
-  oh-my-posh init zsh --config "$HOME/.config/oh-my-posh/atomic.omp.json" > "$_omp_cache"
+# Regenerates the cache when the tool's binary is newer than it. Returns early
+# if the tool isn't installed, so a partially-provisioned machine still boots.
+_cached_init() {
+  (( $+commands[$1] )) || return
+  local cache="$HOME/.cache/zsh-init-$1.zsh"
+  [[ -f "$cache" && ! "${commands[$1]}" -nt "$cache" ]] || "$@" > "$cache"
+  source "$cache"
+}
+
+# ------------------------------------------------------------------------------
+# PROMPT
+# ------------------------------------------------------------------------------
+# Prefers oh-my-posh, falls back to starship. Without the fallback a machine
+# that has only one of the two ends up with no prompt at all.
+_omp_config="$HOME/.config/oh-my-posh/atomic.omp.json"
+if (( $+commands[oh-my-posh] )) && [[ -f "$_omp_config" ]]; then
+  _omp_cache="$HOME/.cache/oh-my-posh-init.zsh"
+  if [[ ! -f "$_omp_cache" || "$_omp_config" -nt "$_omp_cache" || "${commands[oh-my-posh]}" -nt "$_omp_cache" ]]; then
+    oh-my-posh init zsh --config "$_omp_config" > "$_omp_cache"
+  fi
+  source "$_omp_cache"
+else
+  _cached_init starship init zsh
 fi
-source "$_omp_cache"
+unset _omp_config
 
 # ------------------------------------------------------------------------------
 # HISTORY
@@ -38,6 +64,20 @@ setopt PUSHD_SILENT          # don't print the stack after pushd/popd
 # ------------------------------------------------------------------------------
 export EDITOR="nvim"
 export VISUAL="nvim"
+
+# This Neovim config is loaded under the `lazyvim` app-name: config comes from
+# ~/.config/lazyvim and data (including Mason packages) from
+# ~/.local/share/lazyvim. Without this, plain `nvim` uses ~/.local/share/nvim
+# and finds none of the Mason-installed language servers.
+export NVIM_APPNAME="lazyvim"
+
+# Ruby/Elixir toolchains are noticeably happier with an explicit UTF-8 locale.
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+
+# Persist IEx/erl shell history across sessions.
+export ERL_AFLAGS="-kernel shell_history enabled"
+
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 export GOPATH=$HOME/go-workspace
 export CLAUDE_CODE_NO_FLICKER=1
@@ -62,14 +102,22 @@ path=(
   "/opt/homebrew/opt/libpq/bin"
   "$HOME/.antigravity/antigravity/bin"
   $path
+  # Appended, NOT prepended, so project binstubs and `bundle exec` always win.
+  # Puts Neovim's Mason-managed tools (ruby-lsp, rubocop, prettier, eslint_d,
+  # erb-format, shellcheck, shfmt, stylua) on the shell PATH at the exact
+  # versions the editor uses.
+  "$HOME/.local/share/lazyvim/mason/bin"
 )
 export PATH
 
 # ------------------------------------------------------------------------------
 # ALIASES
 # ------------------------------------------------------------------------------
-# Navigation
-alias wks='cd /Volumes/MacintoshEDD/workspace'
+# Navigation. The workspace lives in a different place on each machine, so it's
+# a variable with a sane default — override WORKSPACE in ~/.zshrc.local
+# (e.g. when it lives on an external volume).
+: ${WORKSPACE:="$HOME/workspace"}
+alias wks='cd "$WORKSPACE"'
 
 # Docker
 alias dc='docker compose'
@@ -86,6 +134,20 @@ alias gc='git commit'
 alias gs='git status'
 alias gco='git checkout'
 alias gl='git log --oneline --graph --decorate'
+alias lg='lazygit'
+
+# Rails
+alias be='bundle exec'
+alias rc='bin/rails console'
+alias rs='bin/rails server'
+alias rdm='bin/rails db:migrate'
+alias rt='bin/rails test'
+
+# Elixir / Phoenix
+alias mps='mix phx.server'
+alias mdg='mix deps.get'
+alias mt='mix test'
+alias iexs='iex -S mix'
 
 # Search
 alias rg='rg --smart-case'
@@ -95,7 +157,9 @@ alias grep='rg --smart-case'
 alias ls='eza --icons --group-directories-first'
 alias ll='eza -la --icons --group-directories-first --git'
 alias tree='eza --tree --icons'
-alias cat='bat --plain'
+# `-n` shows line numbers; do NOT add `--plain`, which cancels it out.
+# `--paging=never` keeps redirects and pipes clean.
+alias cat='bat -n --paging=never'
 alias less='bat --paging=always'
 
 # ------------------------------------------------------------------------------
@@ -108,6 +172,22 @@ function y() {
 	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
 }
+
+# Lazy conda init — the hook is slow, so it only runs on the first `conda` call
+if [[ -d /opt/homebrew/Caskroom/miniforge/base ]]; then
+  conda() {
+    unfunction conda
+    local setup
+    if setup="$('/opt/homebrew/Caskroom/miniforge/base/bin/conda' 'shell.zsh' 'hook' 2>/dev/null)"; then
+      eval "$setup"
+    elif [[ -f /opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh ]]; then
+      . /opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh
+    else
+      path=("/opt/homebrew/Caskroom/miniforge/base/bin" $path)
+    fi
+    conda "$@"
+  }
+fi
 
 # ------------------------------------------------------------------------------
 # ZSH COMPLETIONS (cached — rebuilds once every 24h)
@@ -133,19 +213,12 @@ zstyle ':completion:*' cache-path "$HOME/.cache/zcompcache"
 # ------------------------------------------------------------------------------
 # TOOL INITIALIZATIONS
 # ------------------------------------------------------------------------------
-# Cached init helper — regenerates when the tool's binary updates
-_cached_init() {
-  local cache="$HOME/.cache/zsh-init-$1.zsh"
-  [[ -f "$cache" && ! "${commands[$1]}" -nt "$cache" ]] || "$@" > "$cache"
-  source "$cache"
-}
-
 # FZF
 _cached_init fzf --zsh
 
 # Zsh plugins
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null
 
 _autosuggest_or_complete() {
   if [[ -n "$POSTDISPLAY" ]]; then
@@ -157,7 +230,7 @@ _autosuggest_or_complete() {
 zle -N _autosuggest_or_complete
 bindkey '\t' _autosuggest_or_complete
 
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
 
 # Direnv
 _cached_init direnv hook zsh
@@ -165,12 +238,25 @@ _cached_init direnv hook zsh
 # Zoxide
 _cached_init zoxide init zsh
 
+# Atuin — replaces ctrl-r with a far better history search. Up-arrow is left
+# alone so it keeps doing prefix search / autosuggestions.
+_cached_init atuin init zsh --disable-up-arrow
+
 # Mise (cached for faster startup) — should be last
 _mise_cache="$HOME/.cache/mise-activate.zsh"
-if [[ ! -f "$_mise_cache" || "$HOME/.local/bin/mise" -nt "$_mise_cache" ]]; then
-  "$HOME/.local/bin/mise" activate zsh > "$_mise_cache"
+if [[ -x "$HOME/.local/bin/mise" ]]; then
+  if [[ ! -f "$_mise_cache" || "$HOME/.local/bin/mise" -nt "$_mise_cache" ]]; then
+    "$HOME/.local/bin/mise" activate zsh > "$_mise_cache"
+  fi
+  source "$_mise_cache"
 fi
-source "$_mise_cache"
+
+# ------------------------------------------------------------------------------
+# TERMINAL INTEGRATIONS
+# ------------------------------------------------------------------------------
+[[ "$TERM_PROGRAM" == "ghostty" ]] && export TERM=xterm-256color
+[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
+[[ -f "$HOME/.iterm2_shell_integration.zsh" ]] && source "$HOME/.iterm2_shell_integration.zsh"
 
 # ------------------------------------------------------------------------------
 # LOCAL OVERRIDES (secrets, machine-specific config — not tracked)
