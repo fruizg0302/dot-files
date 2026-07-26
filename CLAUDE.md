@@ -62,14 +62,35 @@ either app-name. If the repo moves and `~/.config/lazyvim` is left dangling,
 - 2-space indentation (standard for Ruby, JS, HTML)
 - Lua formatting: StyLua with 2-space indent, 120 column width
 - Prettier for TypeScript, JavaScript, HTML, CSS, JSON, YAML
-- Rubocop for Ruby
+- RuboCop for Ruby — via ruby-lsp's addon, not conform and not a standalone
+  server (see Language Support below)
 - ESLint for JavaScript/TypeScript linting
 
 ## Language Support
 
-Configured language servers (via Mason): TypeScript, HTML, CSS, Lua, Ruby (Solargraph), GraphQL, SQL, YAML, Elixir
+Configured language servers (via Mason): TypeScript, HTML, CSS, Lua, Ruby
+(Solargraph), GraphQL, SQL, YAML, Elixir (Expert)
 
 LazyVim extras enabled: TypeScript, Ruby, JSON, YAML, Tailwind CSS, Prettier, ESLint
+
+Two servers are deliberately disabled — both cases of one language getting two
+servers on the same buffer:
+
+- **`rubocop`** (`servers.rubocop = false` in `nvim/lua/plugins/web.lua`). Mason's
+  rubocop runs from its own gem path and cannot resolve `inherit_gem:`, so it
+  exits 2 on any `rubocop-rails-omakase` project. ruby-lsp's RuboCop addon runs
+  inside the project bundle at the project's pinned version instead.
+- **ElixirLS**, by not enabling `lazyvim.plugins.extras.lang.elixir` — see the
+  comment at the top of `nvim/lua/plugins/elixir.lua`.
+
+## Plugin versions
+
+`nvim/lazy-lock.json` is tracked and authoritative. After pulling, run
+`nvim --headless "+Lazy! restore" +qa` — a pull can move dozens of pinned
+commits while the machine keeps running what it installed months ago, and the
+skew surfaces later as plugin errors that look like config bugs. Neovim tracks
+`nightly` here, so a removed API in a nightly bump plus stale plugins is the
+most likely cause of sudden breakage.
 
 ## File Type Associations
 

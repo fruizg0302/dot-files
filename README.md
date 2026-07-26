@@ -16,14 +16,22 @@ ln -sfn "$DOTFILES/oh-my-posh" ~/.config/oh-my-posh
 ln -sfn "$DOTFILES/ripgrep" ~/.config/ripgrep
 
 # Neovim runs under the `lazyvim` app-name: the shell exports
-# NVIM_APPNAME=lazyvim, so plain `nvim` loads this config from ~/.config/lazyvim
-# and keeps its data in ~/.local/share/lazyvim. Linking ~/.config/nvim as well
-# is harmless and makes the config work with NVIM_APPNAME unset.
+# NVIM_APPNAME=lazyvim, so `nvim` loads this config from ~/.config/lazyvim and
+# keeps its data in ~/.local/share/lazyvim.
+#
+# Deliberately NOT linking ~/.config/nvim as well. That looks harmless, but
+# anything starting Neovim without the shell environment (Raycast, Finder,
+# "Open with", cron) never sees NVIM_APPNAME, reads ~/.config/nvim, and
+# quietly bootstraps a SECOND full plugin and Mason tree under
+# ~/.local/share/nvim. With only ~/.config/lazyvim present, those launches
+# fail loudly instead of silently running a different editor.
 ln -sfn "$DOTFILES/nvim" ~/.config/lazyvim
-ln -sfn "$DOTFILES/nvim" ~/.config/nvim
 
 # Start Neovim (plugins install automatically)
 nvim
+
+# Then pin plugins to the tracked lockfile — see "After pulling" below
+nvim --headless "+Lazy! restore" +qa
 ```
 
 > **Note:** Because of `NVIM_APPNAME=lazyvim`, Neovim reads `~/.config/lazyvim`
@@ -43,7 +51,41 @@ zshrc. Secret *values* live in the macOS Keychain and are read on demand with
 
 ### After pulling on a machine that isn't the one this was set up on
 
-Two things are worth checking:
+Three things are worth checking:
+
+**0. Sync plugins to the lockfile — this is the one that bites.**
+
+```bash
+nvim --headless "+Lazy! restore" +qa
+```
+
+`lazy-lock.json` is tracked, so a pull can move 40+ plugins' pinned commits
+while the machine keeps running whatever it installed months ago. Nothing warns
+you. Plugins only move when you actually restore, and the gap shows up later as
+plugin errors that look like config bugs but are just version skew — see
+[Troubleshooting](#troubleshooting) for the case that prompted this note.
+
+To see the drift first without changing anything (`:Lazy check` won't tell you —
+it fetches remote update logs, which is a different question):
+
+```bash
+nvim --headless -c 'lua
+  local lock = vim.fn.json_decode(table.concat(
+    vim.fn.readfile(vim.fn.stdpath("config") .. "/lazy-lock.json"), "\n"))
+  local drift = {}
+  for name, info in pairs(lock) do
+    local dir = vim.fs.joinpath(vim.fn.stdpath("data"), "lazy", name)
+    if not vim.uv.fs_stat(dir) then
+      drift[#drift + 1] = name .. " (missing)"
+    elseif vim.fn.system({ "git", "-C", dir, "rev-parse", "HEAD" }):gsub("%s+", "") ~= info.commit then
+      drift[#drift + 1] = name
+    end
+  end
+  table.sort(drift)
+  print(("%d/%d out of sync%s"):format(#drift, vim.tbl_count(lock),
+    #drift > 0 and ": " .. table.concat(drift, ", ") or ""))
+' -c qa
+```
 
 **1. Set `WORKSPACE` if your code doesn't live in `~/workspace`.** `wks` and any
 project shortcuts resolve through it. The tracked default is `$HOME/workspace`,
@@ -68,6 +110,65 @@ partially-provisioned machine still boots a working shell instead of erroring.
 **Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/), and a prompt (oh-my-posh *or* starship).
 
 Optional, each independently guarded — install what you use: fzf, fd, bat, eza, zoxide, direnv, atuin, mise, lazygit, yazi, zsh-autosuggestions, zsh-syntax-highlighting (all via Homebrew).
+
+## Troubleshooting
+
+### A wall of plugin errors on every file open
+
+**Restore to the lockfile before debugging anything.** Neovim is tracked on
+`nightly` here, and a nightly bump can delete an API that installed plugins
+still call. The error names the plugin, so it reads like a config bug; it
+usually isn't.
+
+Real case: Neovim **v0.13 removed the `BufModifiedSet` autocmd event**. The
+installed dropbar.nvim still registered it, `nvim_create_autocmd` threw, and the
+failure cascaded through every `FileType` autocmd — so *any* file open produced
+a stack trace. The fixed dropbar commit was already pinned in `lazy-lock.json`;
+the machine had simply never restored to it. `+Lazy! restore` was the entire fix.
+
+Confirm whether an event/API still exists in the running Neovim:
+
+```bash
+nvim --clean --headless -c 'lua print(vim.inspect(vim.fn.getcompletion("Buf", "event")))' -c qa
+```
+
+### Moving `~/.local/share/lazyvim` (or renaming the app-name)
+
+**A plain `mv` silently breaks Mason.** Some packages record absolute paths —
+symlinks in `mason/bin` and interpreter lines inside wrapper scripts — so they
+keep pointing at the old location and fail only when invoked.
+
+After moving, repoint them:
+
+```bash
+OLD=~/.local/share/nvim NEW=~/.local/share/lazyvim
+cd "$NEW"
+find mason -type l -lname "$OLD/*" | while read -r l; do
+  ln -sfn "$(readlink "$l" | sed "s|$OLD|$NEW|")" "$l"
+done
+rg -l -F "$OLD" mason --max-filesize 2M | xargs sed -i '' "s|$OLD|$NEW|g"
+find mason -type l ! -exec test -e {} \; -print   # should print nothing
+```
+
+### Ruby: RuboCop and `ruby_lsp`
+
+**RuboCop deliberately has no standalone LSP server.** Mason's rubocop runs from
+its own gem path, so it cannot resolve `inherit_gem:` — which every
+`rubocop-rails-omakase` project uses — and exits 2. `ruby-lsp` ships a RuboCop
+addon that runs inside the project bundle at the version the project pins, so it
+is the only RuboCop configured. Don't re-add `rubocop` to `ensure_installed` or
+to conform's `formatters_by_ft`; see `nvim/lua/plugins/web.lua`.
+
+**If `ruby_lsp` itself quits, it's the project, not this config.** Check in the
+project directory, in a normal interactive shell so mise's `chpwd` hook fires:
+
+```bash
+mise current ruby   # "missing: ruby@X" means mise falls back to system ruby 2.6
+bundle check        # "The following gems are missing" -> bundle install
+```
+
+A `cannot load such file -- prism/translation/parserNN` error from `ruby_lsp` is
+this same mismatch: the project is running under the wrong Ruby.
 
 ## Features
 
