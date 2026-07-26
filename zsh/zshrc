@@ -53,7 +53,9 @@ setopt HIST_FIND_NO_DUPS     # skip dupes when cycling through history search
 # ZSH OPTIONS
 # ------------------------------------------------------------------------------
 setopt AUTO_CD
-setopt CORRECT
+# CORRECT deliberately left off: it prompts "correct 'rails' to 'rail'?" on
+# perfectly valid commands, and false positives are common with per-project
+# binaries and git subcommands.
 setopt INTERACTIVE_COMMENTS
 setopt AUTO_PUSHD            # cd pushes onto the dir stack
 setopt PUSHD_IGNORE_DUPS     # no duplicate entries on the stack
