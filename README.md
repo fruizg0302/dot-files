@@ -26,9 +26,6 @@ ln -sfn "$DOTFILES/nvim" ~/.config/nvim
 nvim
 ```
 
-<<<<<<< HEAD
-Machine-specific secrets and overrides go in `~/.zshrc.local` (sourced at the end of `zshrc`, never tracked). Secrets live in the macOS Keychain and are read with `security find-generic-password`.
-
 Machine-specific secrets and overrides go in `~/.zshrc.local` (sourced at the end of `zshrc`, never tracked). Secrets live in the macOS Keychain and are read with `security find-generic-password`.
 
 > **Note:** Because of `NVIM_APPNAME=lazyvim`, Neovim reads `~/.config/lazyvim`
