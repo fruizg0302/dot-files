@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Personal dotfiles: zsh (`zsh/zshrc`), oh-my-posh themes (`oh-my-posh/`), ripgrep (`ripgrep/`), and a Neovim configuration using the LazyVim framework, optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
 
-Live configs are symlinks into this repo: `~/.zshrc`, `~/.config/nvim`, `~/.config/oh-my-posh`, `~/.config/ripgrep`. Machine-local secrets stay in `~/.zshrc.local` (untracked); never add secrets or internal hostnames here — the repo is public.
+Live configs are symlinks into this repo: `~/.zshrc`, `~/.config/lazyvim`, `~/.config/oh-my-posh`, `~/.config/ripgrep`. Machine-local secrets stay in `~/.zshrc.local` (untracked); never add secrets or internal hostnames here — the repo is public.
 
 ## Architecture
 
@@ -21,17 +21,23 @@ The `nvim/` directory is symlinked into place. The repo path is machine-local
 (`~/dot-files` on some machines, `~/workspace/PERSONAL/Config/dot-files` on
 others), so prefer relative references over hardcoding it.
 
-The shell exports `NVIM_APPNAME=lazyvim`. Both `~/.config/nvim` and
-`~/.config/lazyvim` may point at `nvim/` — they share one *config* but get
-separate *data* dirs:
+The shell exports `NVIM_APPNAME=lazyvim`, so **only `~/.config/lazyvim` is
+linked at `nvim/`** — `~/.config/nvim` is deliberately absent. The app-name
+selects the *data* dir:
 
-- `NVIM_APPNAME=lazyvim` → data in `~/.local/share/lazyvim/` (Mason packages live here)
-- plain `nvim` → data in `~/.local/share/nvim/` (no Mason packages)
+- `NVIM_APPNAME=lazyvim` → config `~/.config/lazyvim`, data `~/.local/share/lazyvim/` (Mason packages live here)
+- app-name unset → config `~/.config/nvim` (absent), data `~/.local/share/nvim/`
 
-Because of this, plugin specs that reference a Mason binary should use an
-absolute `~/.local/share/lazyvim/mason/bin/...` path so they keep working under
-either app-name. If the repo moves and `~/.config/lazyvim` is left dangling,
-`nvim` silently falls back to the vanilla editor.
+Don't "helpfully" add the `~/.config/nvim` symlink back. It makes every
+env-less launch (Raycast, Finder, cron) bootstrap a duplicate plugin and Mason
+tree under `~/.local/share/nvim`; see the Installation comment in `README.md`.
+Without it, those launches get a config-less vanilla Neovim — quiet, but
+cheap and obvious.
+
+Plugin specs that reference a Mason binary should use an absolute
+`~/.local/share/lazyvim/mason/bin/...` path rather than relying on the
+app-name resolving. If the repo moves and `~/.config/lazyvim` is left
+dangling, `nvim` silently falls back to the vanilla editor.
 
 ## Key Bindings (Space as Leader)
 

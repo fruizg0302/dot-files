@@ -23,8 +23,12 @@ ln -sfn "$DOTFILES/ripgrep" ~/.config/ripgrep
 # anything starting Neovim without the shell environment (Raycast, Finder,
 # "Open with", cron) never sees NVIM_APPNAME, reads ~/.config/nvim, and
 # quietly bootstraps a SECOND full plugin and Mason tree under
-# ~/.local/share/nvim. With only ~/.config/lazyvim present, those launches
-# fail loudly instead of silently running a different editor.
+# ~/.local/share/nvim (94M of duplicates on the machine where this was found).
+#
+# With only ~/.config/lazyvim present, such a launch gets a config-less
+# vanilla Neovim: no plugins, no keymaps, and no second tree — it recreates
+# ~/.local/share/nvim but leaves it empty. That is quiet, not loud, so don't
+# expect an error; you notice it the moment a leader key does nothing.
 ln -sfn "$DOTFILES/nvim" ~/.config/lazyvim
 
 # Start Neovim (plugins install automatically)
