@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Personal dotfiles: zsh (`zsh/zshrc`), oh-my-posh themes (`oh-my-posh/`), ripgrep (`ripgrep/`), and a Neovim configuration using the LazyVim framework, optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
+Personal dotfiles: zsh (`zsh/zshrc`), oh-my-posh themes (`oh-my-posh/`), ripgrep (`ripgrep/`), Ghostty (`ghostty/`), and a Neovim configuration using the LazyVim framework, optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
 
-Live configs are symlinks into this repo: `~/.zshrc`, `~/.config/lazyvim`, `~/.config/oh-my-posh`, `~/.config/ripgrep`. Machine-local secrets stay in `~/.zshrc.local` (untracked); never add secrets or internal hostnames here — the repo is public.
+Live configs are symlinks into this repo: `~/.zshrc`, `~/.config/lazyvim`, `~/.config/oh-my-posh`, `~/.config/ripgrep`, `~/.config/ghostty`. Machine-local secrets stay in `~/.zshrc.local` (untracked); never add secrets or internal hostnames here — the repo is public.
 
 ## Architecture
 

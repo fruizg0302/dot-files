@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal configuration for zsh, Neovim, oh-my-posh, and ripgrep. The Neovim setup is built on [LazyVim](https://www.lazyvim.org/), optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
+Personal configuration for zsh, Neovim, oh-my-posh, ripgrep, and Ghostty. The Neovim setup is built on [LazyVim](https://www.lazyvim.org/), optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
 
 ## Installation
 
@@ -14,6 +14,7 @@ DOTFILES=~/dot-files
 ln -sfn "$DOTFILES/zsh/zshrc" ~/.zshrc
 ln -sfn "$DOTFILES/oh-my-posh" ~/.config/oh-my-posh
 ln -sfn "$DOTFILES/ripgrep" ~/.config/ripgrep
+ln -sfn "$DOTFILES/ghostty" ~/.config/ghostty
 
 # Neovim runs under the `lazyvim` app-name: the shell exports
 # NVIM_APPNAME=lazyvim, so `nvim` loads this config from ~/.config/lazyvim and
@@ -266,6 +267,8 @@ oh-my-posh/
 └── developer.omp.json
 ripgrep/
 └── config                # Smart-case, max filesize, custom file types
+ghostty/
+└── config                # Terminal appearance, keybinds, quick terminal
 nvim/
 ├── init.lua              # Entry point
 ├── lazyvim.json          # LazyVim extras config
