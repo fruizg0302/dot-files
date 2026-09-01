@@ -56,7 +56,7 @@ zshrc. Secret *values* live in the macOS Keychain and are read on demand with
 
 ### After pulling on a machine that isn't the one this was set up on
 
-Three things are worth checking:
+Four things are worth checking:
 
 **0. Sync plugins to the lockfile — this is the one that bites.**
 
@@ -105,14 +105,20 @@ WORKSPACE=/Volumes/YourVolume/workspace
 This replaced a hardcoded `wks` alias that pointed at one machine's external
 drive and silently did nothing everywhere else.
 
-**2. The prompt degrades on purpose.** `zshrc` uses oh-my-posh when it's
-installed *and* `~/.config/oh-my-posh/atomic.omp.json` resolves, and otherwise
-falls back to starship. A machine with neither gets no prompt, so install at
-least one. Every other optional tool is guarded the same way through the
-`_cached_init` helper, which returns early when the tool is missing — so a
-partially-provisioned machine still boots a working shell instead of erroring.
+**2. Every tool is optional.** `zsh/conf.d/30-prompt.zsh` initialises
+oh-my-posh only when it's installed *and* `~/.config/oh-my-posh/atomic.omp.json`
+resolves; without it you get zsh's default prompt. Every other optional tool is
+guarded through the `_cached_init` helper in `60-tools.zsh`, which returns
+early when the tool is missing, so a partially-provisioned machine still boots
+a working shell.
 
-**Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/), and a prompt (oh-my-posh *or* starship).
+**3. Display aliases are human-only.** `41-interactive.zsh` returns early
+unless the shell is interactive and `CLAUDECODE` is unset. That keeps the
+bat/eza/yazi replacements out of Claude Code's Bash tool, where `bat -n` wrote
+line numbers into `cat a > b` redirects. Anything that must behave identically
+for scripts and agents goes in `40-aliases.zsh` instead.
+
+**Requirements:** Neovim >= 0.9.0, Git, a [Nerd Font](https://www.nerdfonts.com/), and oh-my-posh.
 
 Optional, each independently guarded — install what you use: fzf, fd, bat, eza, zoxide, direnv, atuin, mise, lazygit, yazi, zsh-autosuggestions, zsh-syntax-highlighting (all via Homebrew).
 
@@ -260,7 +266,18 @@ Enabled extras (configured in `lazyvim.json`):
 
 ```
 zsh/
-└── zshrc                 # Shell config (history, aliases, fzf, cached tool inits)
+├── zshrc                 # Loader: sources conf.d/*.zsh in order, then ~/.zshrc.local
+└── conf.d/
+    ├── 00-options.zsh    # History and setopts
+    ├── 10-env.zsh        # Exports, FZF vars
+    ├── 20-path.zsh       # PATH assembly (Mason bin appended last)
+    ├── 30-prompt.zsh     # oh-my-posh, cached
+    ├── 40-aliases.zsh    # docker/git/rails/mix shortcuts, wks
+    ├── 41-interactive.zsh# bat/eza/yazi, interactive humans only
+    ├── 50-completion.zsh # compinit cache and zstyles
+    ├── 60-tools.zsh      # fzf, autosuggestions, highlighting, direnv, zoxide, atuin
+    ├── 70-mise.zsh       # mise activate, cached, loads last
+    └── 80-terminal.zsh   # Ghostty TERM override
 oh-my-posh/
 ├── atomic.omp.json       # Prompt theme
 ├── claude-statusline.omp.json
