@@ -1,0 +1,55 @@
+--- a/DockMatcher.js
++++ b/DockMatcher.js
+@@ -978,6 +978,11 @@
+         }
+     }
+ 
++    // Quickshell exposes StartupWMClass as startupClass. Custom launchers may
++    // have different IDs and icons from their running application's app ID.
++    var startupClass = entry ? String(entry.startupClass || "").toLowerCase().trim() : "";
++    if (startupClass && (appClass === startupClass || appClassClean === stripDesktop(startupClass))) return true;
++
+     // Transmission GTK Wayland dynamic app ID matching (com.transmissionbt.transmission_<pid>_<random>)
+     if (appClass.indexOf("com.transmissionbt.transmission") === 0 || cleanId.indexOf("com.transmissionbt.transmission") === 0) {
+         var isTransDockItem = (cleanId === "transmission" || cleanId === "transmission-gtk" || cleanId === "transmission-qt" || cleanId.indexOf("com.transmissionbt.transmission") === 0);
+--- a/tests/tst_DockMatcher.qml
++++ b/tests/tst_DockMatcher.qml
+@@ -4,6 +4,38 @@
+ 
+ TestCase {
+     name: "DockMatcher"
++
++    function test_customLauncherKeepsItsWindowsInOneIcon_data() {
++        return [
++            { tag: "Ghostty", id: "local-ghostty", appClass: "com.mitchellh.ghostty", name: "Ghostty", command: "ghostty" },
++            { tag: "Zed", id: "local-zed", appClass: "dev.zed.Zed", name: "Zed", command: "zeditor %U" }
++        ]
++    }
++
++    function test_customLauncherKeepsItsWindowsInOneIcon(data) {
++        // Native Quickshell entries use execString and startupClass; launcher
++        // IDs and custom artwork need not resemble the Wayland app ID.
++        var entry = { id: data.id, name: data.name, startupClass: data.appClass,
++                      execString: data.command, icon: "/custom/icons/" + data.name + ".png" }
++        var top1 = { appId: data.appClass, title: "First window" }
++        var top2 = { appId: data.appClass, title: "Second window" }
++        var entries = [entry, { id: data.appClass, name: data.name, icon: data.appClass }]
++        verify(DockMatcher.matchToplevel(top1, data.id, entry, entries))
++        verify(!DockMatcher.matchToplevel({ appId: "unrelated-app", title: data.name }, data.id, entry, entries))
++
++        var states = [[], [top1], [top1, top2], []]
++        for (var i = 0; i < states.length; i++) {
++            var items = DockMatcher.buildDockItems([data.id], [top1, top2], top2, entries, null, {}, {}, 0, states[i])
++            compare(items.length, 1)
++            compare(items[0].appId, data.id)
++            compare(items[0].windowCount, 2)
++            compare(items[0].isRunning, true)
++            compare(items[0].isPinned, true)
++            compare(items[0].isMinimized, i === 2)
++            compare(items[0].toplevels[0], top1)
++            compare(items[0].toplevels[1], top2)
++        }
++    }
+ 
+     function test_stripDesktop() {
+         compare(DockMatcher.stripDesktop("google-chrome.desktop"), "google-chrome")

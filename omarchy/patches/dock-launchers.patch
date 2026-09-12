@@ -1,0 +1,13 @@
+--- a/local-ghostty.desktop
++++ b/local-ghostty.desktop
+@@ -3,2 +3,4 @@
+ Name=Ghostty
++StartupWMClass=com.mitchellh.ghostty
++Categories=System;TerminalEmulator;
+ Exec=ghostty
+--- a/local-zed.desktop
++++ b/local-zed.desktop
+@@ -3,2 +3,3 @@
+ Name=Zed
++StartupWMClass=dev.zed.Zed
+ Exec=zeditor %U

@@ -1,0 +1,287 @@
+diff --git a/Model.js b/Model.js
+index 8c01c0c..e0d8fed 100644
+--- a/Model.js
++++ b/Model.js
+@@ -60,6 +60,47 @@ function sortedWindows(values) {
+   return result
+ }
+ 
++function windowKey(window) {
++  return window && window.address ? String(window.address).replace(/^0x/, "") : ""
++}
++
++function indexOfWindow(values, window) {
++  if (!window) return -1
++  var key = windowKey(window)
++  for (var i = 0; i < values.length; i++) {
++    if (values[i] === window || (key && windowKey(values[i]) === key)) return i
++  }
++  return -1
++}
++
++// Seed the list once, then retain its order across focus changes. New windows
++// join the end and closed windows leave without reshuffling the survivors.
++function stableWindows(values, previous) {
++  var live = values ? Array.prototype.slice.call(values) : []
++  if (!previous || previous.length === 0) return sortedWindows(live)
++  var result = []
++  for (var i = 0; i < previous.length; i++) {
++    var liveIndex = indexOfWindow(live, previous[i])
++    if (liveIndex >= 0) result.push(live[liveIndex])
++  }
++  for (var j = 0; j < live.length; j++) {
++    if (indexOfWindow(result, live[j]) < 0) result.push(live[j])
++  }
++  return result
++}
++
++function cycleIndex(values, current, direction) {
++  if (values.length === 0) return 0
++  var index = indexOfWindow(values, current)
++  if (index < 0) {
++    for (var i = 0; i < values.length; i++) {
++      if (isCurrent(values[i])) { index = i; break }
++    }
++  }
++  if (index < 0) return direction < 0 ? values.length - 1 : 0
++  return (index + (direction < 0 ? -1 : 1) + values.length) % values.length
++}
++
+ function filteredWindows(values, query) {
+   var q = String(query || "").trim().toLowerCase()
+   if (!q) return values.slice()
+@@ -74,13 +115,19 @@ function filteredWindows(values, query) {
+ // (hl.dsp.focus), fall back to the plain focuswindow syntax for stock
+ // Hyprland. Returns null when the window has no address, deferring to the
+ // native activate path in Switcher.qml.
+-function focusCommand(window) {
++function focusRequest(window) {
+   var raw = window && window.address
+   if (raw === null || raw === undefined || raw === "") return null
+   var rawAddress = String(raw)
+   var address = rawAddress.indexOf("0x") === 0 ? rawAddress : "0x" + rawAddress
+-  return "hyprctl dispatch \"hl.dsp.focus({ window = 'address:" + address +
+-    "' })\" >/dev/null 2>&1 || hyprctl dispatch focuswindow \"address:" + address + "\""
++  return "hl.dsp.focus({ window = 'address:" + address + "' })"
++}
++
++function focusCommand(window) {
++  var request = focusRequest(window)
++  if (!request) return null
++  return "hyprctl dispatch \"" + request +
++    "\" >/dev/null 2>&1 || hyprctl dispatch focuswindow \"address:0x" + windowKey(window) + "\""
+ }
+ 
+ if (typeof module !== "undefined") module.exports = {
+@@ -89,6 +136,11 @@ if (typeof module !== "undefined") module.exports = {
+   detail: detail,
+   isCurrent: isCurrent,
+   sortedWindows: sortedWindows,
++  windowKey: windowKey,
++  indexOfWindow: indexOfWindow,
++  stableWindows: stableWindows,
++  cycleIndex: cycleIndex,
+   filteredWindows: filteredWindows,
++  focusRequest: focusRequest,
+   focusCommand: focusCommand
+ }
+diff --git a/Switcher.qml b/Switcher.qml
+index 09b07d3..1c87ca3 100644
+--- a/Switcher.qml
++++ b/Switcher.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import Quickshell
++import Quickshell.Io
+ import Quickshell.Hyprland
+ import Quickshell.Wayland
+ import qs.Commons
+@@ -30,6 +31,17 @@ Item {
+   // openPanelIds; we must not fight it, so `opened` is only our UI state.
+   property bool opened: false
+   property bool cycleMode: false
++  property bool orderedCycle: false
++  // A second quick tap may arrive before Hyprland acknowledges the first focus.
++  property var pendingFocusWindow: null
++
++  // Compositor-side release bindings also work when Qt misses the modifier event.
++  IpcHandler {
++    target: "personal-omaswitch"
++    function confirm(): void {
++      if (root.opened && root.cycleMode) root.focusSelected()
++    }
++  }
+   property string filterText: ""
+   property int selectedIndex: 0
+ 
+@@ -88,15 +100,22 @@ Item {
+   }
+ 
+   function refresh() {
+-    allWindows = Model.sortedWindows(Hyprland.toplevels.values)
++    var selected = root.selectedToplevel
++    allWindows = Model.stableWindows(Hyprland.toplevels.values, allWindows)
+     rebuildRows()
++    var index = Model.indexOfWindow(rows, selected)
++    if (index >= 0) selectedIndex = index
++    if (Model.indexOfWindow(allWindows, pendingFocusWindow) < 0) pendingFocusWindow = null
+   }
+ 
+   function focusSelected() {
+     var window = rows[selectedIndex]
+     if (!window) return root.dismiss()
+     var command = Model.focusCommand(window)
+-    if (command) {
++    root.pendingFocusWindow = window
++    if (command && Hyprland.usingLua) {
++      Hyprland.dispatch(Model.focusRequest(window))
++    } else if (command) {
+       Quickshell.execDetached(["sh", "-c", command])
+     } else if (window.wayland && typeof window.wayland.activate === "function") {
+       window.wayland.activate()
+@@ -114,32 +133,36 @@ Item {
+     try { payload = JSON.parse(payloadJson || "{}") } catch (e) { payload = ({}) }
+     var direction = Number(payload.direction) < 0 ? -1 : 1
+ 
+-    // Repeated Alt+Tab summons cycle instead of resetting or closing.
++    // Repeated summons cycle through the same list while Super remains held.
+     if (root.opened && payload.mode === "cycle") {
+       root.cycleMode = true
++      root.orderedCycle = payload.ordered === true
+       root.select(direction)
+       return
+     }
+ 
+     root.opened = true
+     root.cycleMode = payload.mode === "cycle"
++    root.orderedCycle = payload.ordered === true
+     root.filterText = ""
+     root.selectedIndex = 0
+     root.refresh()
+-    if (root.cycleMode && root.rows.length > 1 && Model.isCurrent(root.rows[0]))
+-      root.selectedIndex = direction < 0 ? root.rows.length - 1 : 1
+-    Qt.callLater(function() { keyCatcher.forceActiveFocus() })
++    if (root.cycleMode)
++      root.selectedIndex = Model.cycleIndex(root.rows, root.pendingFocusWindow || Hyprland.activeToplevel, direction)
++    Qt.callLater(function() { if (root.opened) keyCatcher.forceActiveFocus() })
+   }
+ 
+   function close() {
+     root.opened = false
+     root.cycleMode = false
++    root.orderedCycle = false
+   }
+ 
+   // User-initiated dismissal also drops the host's openPanelIds entry.
+   function dismiss() {
+     root.opened = false
+     root.cycleMode = false
++    root.orderedCycle = false
+     if (root.shell && typeof root.shell.hide === "function")
+       root.shell.hide((root.manifest && root.manifest.id) || "piyush.omaswitch")
+   }
+@@ -147,9 +170,28 @@ Item {
+   // Keep the list fresh while open (windows open/close/rename).
+   Connections {
+     target: Hyprland
++    function onActiveToplevelChanged() {
++      if (Model.indexOfWindow([Hyprland.activeToplevel], root.pendingFocusWindow) >= 0)
++        root.pendingFocusWindow = null
++    }
+     function onRawEvent(event) {
+-      if (!root.opened) return
+       var name = event ? String(event.name || "") : ""
++      // Both bindings emit directly on the same compositor event socket. Even
++      // a press/release pair received in one batch opens, selects, then confirms.
++      if (name === "custom") {
++        var data = String(event.data || "")
++        if (data === "omaswitch,next" || data === "omaswitch,previous") {
++          var payload = JSON.stringify({mode: "cycle", ordered: true,
++                                        direction: data === "omaswitch,previous" ? -1 : 1})
++          if (root.shell && typeof root.shell.summon === "function")
++            root.shell.summon((root.manifest && root.manifest.id) || "piyush.omaswitch", payload)
++          else root.open(payload)
++        } else if (data === "omaswitch,confirm" && root.opened && root.cycleMode) {
++          root.focusSelected()
++        }
++        return
++      }
++      if (!root.opened) return
+       if (name === "activewindow" || name === "closewindow" || name === "openwindow" ||
+           name === "workspace" || name === "movewindow" || name.indexOf("windowtitle") === 0) {
+         root.refresh()
+@@ -157,6 +199,11 @@ Item {
+     }
+   }
+ 
++  Connections {
++    target: Hyprland.toplevels
++    function onValuesChanged() { if (root.opened) root.refresh() }
++  }
++
+   PanelWindow {
+     id: panel
+     visible: root.opened
+@@ -304,6 +351,10 @@ Item {
+ 
+       Keys.priority: Keys.BeforeItem
+       Keys.onPressed: function(event) {
++        if (event.isAutoRepeat && (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)) {
++          event.accepted = true
++          return
++        }
+         if (event.key === Qt.Key_Escape) {
+           root.dismiss()
+           event.accepted = true
+@@ -328,7 +379,7 @@ Item {
+       // Best-effort native Alt-Tab behavior. If the compositor delivers the
+       // modifier release after granting this overlay focus, commit selection.
+       Keys.onReleased: function(event) {
+-        if (root.cycleMode && (event.key === Qt.Key_Alt || event.key === Qt.Key_Meta)) {
++        if (root.cycleMode && !root.orderedCycle && (event.key === Qt.Key_Alt || event.key === Qt.Key_Meta)) {
+           root.focusSelected()
+           event.accepted = true
+         }
+diff --git a/test_model.js b/test_model.js
+index 90df33a..ac412c0 100644
+--- a/test_model.js
++++ b/test_model.js
+@@ -59,3 +59,38 @@ assert.equal(Model.isCurrent(staleEmpty), false, "empty focusHistoryID must not
+ assert.equal(Model.isCurrent({ activated: false, lastIpcObject: {} }), false, "missing focusHistoryID must not be current")
+ assert.equal(Model.isCurrent(editorCur), true, "activated window must be current")
+ assert.equal(Model.isCurrent({ activated: false, lastIpcObject: { focusHistoryID: 0 } }), true, "real rank 0 must be current")
++
++// Full forward and reverse cycles retain the same order after focus changes.
++const ringA = { address: "aaa", title: "A", lastIpcObject: { focusHistoryID: 0 } }
++const ringB = { address: "bbb", title: "B", lastIpcObject: { focusHistoryID: 1 } }
++const ringC = { address: "ccc", title: "C", lastIpcObject: { focusHistoryID: 2 } }
++let ring = Model.stableWindows([ringC, ringA, ringB], [])
++assert.deepEqual(ring, [ringA, ringB, ringC])
++let current = ringA
++for (const expectedWindow of [ringB, ringC, ringA, ringB]) {
++  const next = ring[Model.cycleIndex(ring, current, 1)]
++  assert.equal(next, expectedWindow, "each tap must visit the next window, including wraparound")
++  ringA.lastIpcObject.focusHistoryID = next === ringA ? 0 : 2
++  ringB.lastIpcObject.focusHistoryID = next === ringB ? 0 : 1
++  ringC.lastIpcObject.focusHistoryID = next === ringC ? 0 : 2
++  ring = Model.stableWindows([next, ringC, ringA, ringB].filter((w, i, a) => a.indexOf(w) === i), ring)
++  assert.deepEqual(ring, [ringA, ringB, ringC], "focus must not reorder the list")
++  current = next
++}
++assert.equal(Model.cycleIndex(ring, ringA, -1), 2, "reverse wraps from first to last")
++assert.equal(Model.cycleIndex([], null, 1), 0)
++assert.equal(Model.cycleIndex([ringA], ringA, 1), 0)
++assert.equal(Model.cycleIndex([ringA], ringA, -1), 0)
++
++// A queued focus target wins over the still-current window during quick taps.
++ringA.lastIpcObject.focusHistoryID = 0
++assert.equal(Model.cycleIndex(ring, ringB, 1), 2, "pending B focus must make the next tap select C")
++
++// Closed windows leave, new ones append, and recreated wrappers retain identity.
++const ringD = { address: "ddd", title: "D", lastIpcObject: { focusHistoryID: 0 } }
++const newWrapperC = { address: "0xccc", title: "Renamed C" }
++assert.deepEqual(Model.stableWindows([ringD, newWrapperC, ringA], ring), [ringA, newWrapperC, ringD])
++assert.equal(Model.indexOfWindow([newWrapperC], ringC), 0)
++assert.equal(Model.indexOfWindow(ring, null), -1)
++assert.equal(Model.focusRequest({ address: "0xaaa" }), "hl.dsp.focus({ window = 'address:0xaaa' })")
++console.log("Round-robin, wraparound, and rapid-tap checks passed")
