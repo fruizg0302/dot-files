@@ -1,0 +1,5 @@
+# Merge these keys into the existing [tui] table in ~/.codex/config.toml.
+[tui]
+theme = "catppuccin-mocha"
+status_line = ["model-with-reasoning", "context-used", "used-tokens", "git-branch", "current-dir"]
+status_line_use_colors = true

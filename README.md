@@ -2,6 +2,13 @@
 
 Personal configuration for zsh, Neovim, oh-my-posh, ripgrep, and Ghostty. The Neovim setup is built on [LazyVim](https://www.lazyvim.org/), optimized for web development with Ruby on Rails, TypeScript/JavaScript, and HTML/CSS.
 
+## Agent status lines and workspace layout
+
+- [Codex and Claude Code status lines](docs/status-lines.md): current settings,
+  the Claude theme, and instructions for merging them into an existing setup.
+- [Work directory layout](docs/work-tree.md): the first-level `~/Work` folders
+  and their purpose.
+
 ## Installation
 
 ```bash

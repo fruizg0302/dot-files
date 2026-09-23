@@ -28,7 +28,7 @@
           "background": "p:claude-orange",
           "leading_diamond": "\ue0b6",
           "trailing_diamond": "\ue0b4",
-          "template": " \U000f09a8 "
+          "template": " 󰦨 "
         },
         {
           "type": "claude",
@@ -45,19 +45,11 @@
           "foreground": "p:marble-light",
           "background": "p:stone",
           "foreground_templates": [
-            "{{ if gt .TokenUsagePercent.Value 80.0 }}p:danger{{ end }}",
-            "{{ if and (gt .TokenUsagePercent.Value 60.0) (le .TokenUsagePercent.Value 80.0) }}p:warning{{ end }}"
+            "{{ if gt .TokenUsagePercent 80.0 }}p:danger{{ end }}",
+            "{{ if gt .TokenUsagePercent 60.0 }}p:warning{{ end }}"
           ],
-          "trailing_diamond": "\ue0b0",
-          "template": " {{ .TokenUsagePercent.Gauge }} {{ .FormattedTokens }} "
-        },
-        {
-          "type": "claude",
-          "style": "diamond",
-          "foreground": "p:success",
-          "background": "p:warm-stone",
           "trailing_diamond": "\ue0b4",
-          "template": " \uf155 {{ .FormattedCost }} "
+          "template": " {{ $n := min 5 (div (int .TokenUsagePercent) 20) }}{{ repeat $n \"▰\" }}{{ repeat (sub 5 $n) \"▱\" }} {{ .TokenUsagePercent }}% \u00b7 {{ .FormattedTokens }} "
         }
       ]
     },
