@@ -8,6 +8,8 @@ Personal configuration for zsh, Neovim, oh-my-posh, ripgrep, and Ghostty. The Ne
   the Claude theme, and instructions for merging them into an existing setup.
 - [Work directory layout](docs/work-tree.md): the first-level `~/Work` folders
   and their purpose.
+- [PX13 keyboard hotkeys](docs/px13-keyboard-hotkeys.md): F8 lighting effects,
+  the ASUS radio-key remap, and the default Fn-lock mode.
 
 ## Installation
 
