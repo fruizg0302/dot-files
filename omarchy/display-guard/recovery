@@ -1,0 +1,44 @@
+#!/bin/bash
+
+mode="${1:-}"
+shift || exit 2
+case "$mode" in
+  clamshell) deferred=0 ;;
+  modeless) deferred=2 ;;
+  *) exit 2 ;;
+esac
+
+monitors=$(timeout 2s hyprctl monitors all -j 2>/dev/null) || exit "$deferred"
+state=$(jq -er '
+  if type != "array" then error("Invalid monitor list")
+  else
+    [.[] | select(.disabled == false and .name != "FALLBACK")] as $active
+    | if any($active[]; .dpmsStatus == false) then "blanked"
+      elif ($active | length) == 0 then "missing"
+      elif all($active[]; .dpmsStatus == true) then "awake"
+      else error("Unknown display power state")
+      end
+  end
+' <<< "$monitors" 2>/dev/null) || exit "$deferred"
+
+if [[ $state == missing ]]; then
+  lock=$(timeout 2s hyprctl -j locked 2>/dev/null) || exit "$deferred"
+  locked=$(jq -er '
+    if .locked == true then "yes"
+    elif .locked == false then "no"
+    else error("Unknown lock state")
+    end
+  ' <<< "$lock" 2>/dev/null) || exit "$deferred"
+
+  # A blanked external display can disappear before its HDMI link settles.
+  if [[ $locked == yes ]] && omarchy-hw-laptop-closed; then
+    state=blanked
+  fi
+fi
+
+if [[ $state == blanked ]]; then
+  [[ $mode == clamshell ]] && exit 0
+  exit 1
+fi
+
+exec "${OMARCHY_PATH:-/usr/share/omarchy}/bin/omarchy-hyprland-monitor-$mode" "$@"
