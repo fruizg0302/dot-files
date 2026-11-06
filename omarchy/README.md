@@ -2,6 +2,9 @@
 
 Personal overrides for Omarchy 4's Lua-based Hyprland configuration.
 
+- The [display recovery guard](display-guard/README.md) keeps monitor recovery
+  from undoing intentional lock-screen display blanking after suspend. It has
+  its own restore instructions and does not require the plugins below.
 - The dock matches custom launchers using `StartupWMClass`, so Ghostty and Zed
   windows stay grouped under their pinned icons when minimized or restored.
 - Super+Tab previews the next window while Super is held and focuses it when

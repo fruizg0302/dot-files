@@ -11,6 +11,12 @@ Personal configuration for zsh, Neovim, oh-my-posh, ripgrep, and Ghostty. The Ne
 - [PX13 keyboard hotkeys](docs/px13-keyboard-hotkeys.md): F8 lighting effects,
   the ASUS radio-key remap, and the default Fn-lock mode.
 
+## Omarchy desktop fixes
+
+[Desktop overrides](omarchy/README.md), including the
+[display recovery guard](omarchy/display-guard/README.md) for the lock-screen
+display-power loop after suspend.
+
 ## Installation
 
 ```bash
