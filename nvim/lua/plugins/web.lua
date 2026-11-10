@@ -50,27 +50,48 @@ return {
   -- Mason: ensure all necessary tools are installed
   {
     "mason-org/mason.nvim",
-    opts = {
-      ensure_installed = {
+    -- Add-if-absent rather than a plain `opts` table.
+    --
+    -- LazyVim marks ensure_installed with `opts_extend`, so every spec's list
+    -- is CONCATENATED, never deduplicated, and its config loop then calls
+    -- pkg:install() once per entry. A package named both here and by LazyVim
+    -- or one of the enabled extras therefore gets two install() calls in the
+    -- same tick, the second asserts "Package is already installing", and that
+    -- aborts mason.nvim's entire config block — no packages get installed at
+    -- all, on every startup. Real overlaps here: stylua and shfmt (LazyVim
+    -- base), erb-lint (lang.ruby), prettier (formatting.prettier).
+    --
+    -- LSP servers are deliberately absent: LazyVim installs a package for
+    -- every entry in `opts.servers` through mason-lspconfig's own
+    -- ensure_installed, which races this list for the same reason.
+    opts = function(_, opts)
+      local want = {
         -- Ruby/Rails. RuboCop deliberately absent: ruby-lsp's addon supplies it
         -- from the project bundle (see the lspconfig block above).
         "solargraph",
         "erb-lint",
         -- TypeScript/JavaScript
-        "typescript-language-server",
-        "eslint-lsp",
         "prettier",
-        -- HTML/CSS
-        "html-lsp",
-        "css-lsp",
-        "emmet-ls",
+        -- CSS
         "stylelint-lsp",
         -- General
         "stylua",
         "shellcheck",
         "shfmt",
-      },
-    },
+      }
+
+      local merged, seen = {}, {}
+      for _, list in ipairs({ opts.ensure_installed or {}, want }) do
+        for _, pkg in ipairs(list) do
+          if not seen[pkg] then
+            seen[pkg] = true
+            merged[#merged + 1] = pkg
+          end
+        end
+      end
+      opts.ensure_installed = merged
+      return opts
+    end,
   },
 
   -- Formatter configuration
