@@ -1,0 +1,540 @@
+diff --git a/BarLayout.js b/BarLayout.js
+index e44c625..bd5be63 100644
+--- a/BarLayout.js
++++ b/BarLayout.js
+@@ -6,10 +6,10 @@
+ // Nothing here touches QML. Loadout.qml imports it, BarWorkbench.qml and
+ // BarRail.qml reach it through their host, and node --test requires it.
+ 
+-var SECTIONS = ["left", "center", "right"]
++var SECTIONS = ["left", "centerBegin", "center", "centerEnd", "right", "tray"]
+ 
+ function decodeLayout(str) {
+-  var out = { left: [], center: [], right: [] }
++  var out = cloneLayout({})
+   var parts = String(str || "").split("|")
+   for (var i = 0; i < parts.length; i++) {
+     var colon = parts[i].indexOf(":")
+@@ -26,6 +26,8 @@ function encodeLayout(l) {
+   var parts = []
+   for (var i = 0; i < SECTIONS.length; i++) {
+     var sec = SECTIONS[i]
++    // Keep legacy layouts canonical when the extra sections are empty.
++    if (sec !== "left" && sec !== "center" && sec !== "right" && !((l && l[sec]) || []).length) continue
+     parts.push(sec + ":" + ((l && l[sec]) || []).join(","))
+   }
+   return parts.join("|")
+@@ -40,7 +42,9 @@ function findInLayout(l, id) {
+ }
+ 
+ function flattenLayout(l) {
+-  return [].concat(l.left || [], l.center || [], l.right || [])
++  var out = []
++  for (var i = 0; i < SECTIONS.length; i++) out = out.concat(l[SECTIONS[i]] || [])
++  return out
+ }
+ 
+ function removeFromLayout(l, id) {
+@@ -66,7 +70,8 @@ function cloneLayout(l) {
+ // against the section as it stands once the widget has been lifted out of
+ // wherever it was, which is the position a drag is aiming at.
+ function place(layout, id, section, index) {
+-  if (!layout || !layout[section]) return null
++  if (!layout || SECTIONS.indexOf(section) < 0) return null
++  if (section === "tray" && id === "omarchy.tray") return null
+   var next = cloneLayout(layout)
+   removeFromLayout(next, id)
+   var arr = next[section]
+@@ -103,6 +108,7 @@ function nudge(layout, id, delta) {
+     next[SECTIONS[si - 1]].push(id)
+   } else if (ni >= arr.length) {
+     if (si === SECTIONS.length - 1) return null
++    if (SECTIONS[si + 1] === "tray" && id === "omarchy.tray") return null
+     arr.splice(at.index, 1)
+     next[SECTIONS[si + 1]].unshift(id)
+   } else {
+diff --git a/BarRail.qml b/BarRail.qml
+index 3eee0a0..237fbb7 100644
+--- a/BarRail.qml
++++ b/BarRail.qml
+@@ -56,8 +56,8 @@ Item {
+   // cannot feed back into the measurement.
+   readonly property real runHave: (horizontal ? width : height) - 2 * margin
+   readonly property real runNeed: horizontal
+-    ? startGroup.width + midGroup.width + endGroup.width + 2 * margin
+-    : startGroup.height + midGroup.height + endGroup.height + 2 * margin
++    ? startGroup.width + beforeGroup.width + midGroup.width + afterGroup.width + endGroup.width + 4 * margin
++    : startGroup.height + beforeGroup.height + midGroup.height + afterGroup.height + endGroup.height + 4 * margin
+   readonly property real fit:
+     (runNeed > 0 && runNeed > runHave) ? Math.max(0.4, runHave / runNeed) : 1
+ 
+@@ -76,6 +76,18 @@ Item {
+     x: root.horizontal ? root.margin : (root.width - width) / 2
+     y: root.horizontal ? (root.height - height) / 2 : root.margin
+   }
++  BarGroup {
++    id: beforeGroup
++    ids: root.layout.centerBegin || []
++    scale: root.fit
++    transformOrigin: root.horizontal ? Item.Right : Item.Bottom
++    x: root.horizontal
++      ? (root.width - midGroup.width * root.fit) / 2 - root.margin * root.fit - width
++      : (root.width - width) / 2
++    y: root.horizontal
++      ? (root.height - height) / 2
++      : (root.height - midGroup.height * root.fit) / 2 - root.margin * root.fit - height
++  }
+   BarGroup {
+     id: midGroup
+     ids: root.layout.center || []
+@@ -84,6 +96,18 @@ Item {
+     x: (root.width - width) / 2
+     y: (root.height - height) / 2
+   }
++  BarGroup {
++    id: afterGroup
++    ids: root.layout.centerEnd || []
++    scale: root.fit
++    transformOrigin: root.horizontal ? Item.Left : Item.Top
++    x: root.horizontal
++      ? (root.width + midGroup.width * root.fit) / 2 + root.margin * root.fit
++      : (root.width - width) / 2
++    y: root.horizontal
++      ? (root.height - height) / 2
++      : (root.height + midGroup.height * root.fit) / 2 + root.margin * root.fit
++  }
+   BarGroup {
+     id: endGroup
+     ids: root.layout.right || []
+diff --git a/BarWorkbench.qml b/BarWorkbench.qml
+index 7551706..3565989 100644
+--- a/BarWorkbench.qml
++++ b/BarWorkbench.qml
+@@ -4,18 +4,18 @@ import QtQuick
+ import qs.Commons
+ 
+ // The workbench: the bar, laid out in the shape of the bar. A rail across the
+-// top shows what the fitting actually looks like; under it sit the three
+-// section bins, each an equal third of the rail and tethered to the stretch it
++// top shows what the fitting actually looks like; under it sit the six
++// section bins, each tethered to the stretch it
+ // governs; under those, one inventory pane the full width of the rail holding
+ // everything that is off.
+ //
+-// Bar mods uses three bins (LEFT, CENTER, RIGHT), but the bins are data, so
++// Bar mods uses one bin per bar section, but the bins are data, so
+ // another slot could open a workbench of its own with as many columns.
+ //
+ // Mouse: drag a tile into a bin, between two tiles, or back to the inventory,
+ // or take it off the bar with the cross in its corner. Hovering the rail moves
+ // the cursor. Keyboard: ← → walk the whole bar and
+-// wrap at its ends, ↑ ↓ cross between the bins and the inventory, 1 2 3 send
++// wrap at its ends, ↑ ↓ cross between the bins and the inventory, 1–6 send
+ // the tile to a bin, BACKSPACE benches it, SHIFT+← → nudge it along, SPACE
+ // toggles. The host handles ENTER (fit), ESC (cancel) and D around it.
+ Item {
+@@ -29,8 +29,11 @@ Item {
+   // is optional: a workbench whose sections have one name only leaves it out.
+   property var bins: [
+     { id: "left",   label: "LEFT",   alt: "TOP" },
++    { id: "centerBegin", label: "BEFORE" },
+     { id: "center", label: "CENTER", alt: "MIDDLE" },
+-    { id: "right",  label: "RIGHT",  alt: "BOTTOM" }
++    { id: "centerEnd", label: "AFTER" },
++    { id: "right",  label: "RIGHT",  alt: "BOTTOM" },
++    { id: "tray", label: "TRAY" }
+   ]
+ 
+   readonly property var layout: (host && host.previewBarLayout) || ({})
+@@ -94,7 +97,7 @@ Item {
+ 
+   // Tiles shrink until the rail, the bins, the inventory and their gaps fit
+   // the body: the workbench is a whole arrangement and must never scroll.
+-  // Width drives this as much as height — a bin is a third of the rail, so
++  // Width drives this as much as height — a bin is a sixth of the rail, so
+   // every widget it cannot fit on one row costs a row of height everywhere.
+   readonly property real tileFull: Style.space(64)
+   readonly property real tileFloor: Style.space(38)
+@@ -422,7 +425,7 @@ Item {
+       }
+     }
+ 
+-    // -- The bins: equal thirds of the rail ------------------------------
++    // -- The bins: equal shares of the rail ------------------------------
+     Row {
+       id: binsRow
+       anchors { left: parent.left; top: parent.top; topMargin: root.railBlockHeight + root.tetherHeight }
+diff --git a/Loadout.qml b/Loadout.qml
+index 55b4065..847dbef 100644
+--- a/Loadout.qml
++++ b/Loadout.qml
+@@ -1845,7 +1845,7 @@ Item {
+               return boot.concat([["ESC", root.dirty ? "discard" : "close"]])
+             }
+             if (root.workbenchOpen) {
+-              var wb = [["←→", "along the bar"], ["↑↓", "inventory"], ["1 2 3", "to section"],
++              var wb = [["←→", "along the bar"], ["↑↓", "inventory"], ["1–6", "to section"],
+                         ["⌫", "bench"], ["⇧←→", "nudge"], ["ENTER", "fit"]]
+               if (!root.compact) wb.push(["D", "fit + deploy"])
+               return wb.concat([["ESC", "cancel"]])
+diff --git a/README.md b/README.md
+index 70d25b0..04bf095 100644
+--- a/README.md
++++ b/README.md
+@@ -265,7 +265,8 @@ file the next open folds into the status pill.
+ Bar mods is the one multi-select slot. What it holds is not an item off a row
+ but a whole arrangement, so it has no inventory to browse: in its place sits a
+ button that opens the workbench, with what the bar currently carries beside it.
+-Its value is the whole layout as one string (`left:a,b|center:c|right:d`), so
++Its value is the whole layout as one string
++(`left:a|centerBegin:b|center:c|centerEnd:d|right:e|tray:f`), so
+ previewing, fitting, saving and "is it live" work exactly as for every other
+ slot, and a saved loadout records the entire bar arrangement. On the button,
+ the item data panel describes the slot rather than a widget: how the fitting
+@@ -277,9 +278,11 @@ the character stand down while it is open. It is laid
+ out in the shape of the thing it edits. Across the top is the **rail** — the
+ fitting drawn as a bar, in the previewed theme, tagged with the edge the bar
+ is really on and whether it is solid; a clear bar lets the previewed wallpaper
+-through exactly as it would on the desktop. Under it sit the three section
+-bins, LEFT, CENTER and RIGHT, as equal thirds of the rail, each tethered to
+-the stretch of rail it governs; under those, one **inventory** pane the rail's
++through exactly as it would on the desktop. Under it sit six section
++bins, LEFT, BEFORE, CENTER, AFTER, RIGHT and TRAY, as equal shares of the rail.
++BEFORE and AFTER sit beside the centered clock; TRAY holds widgets in the
++tray drawer, not disabled widgets. The drawer's contents stay hidden on the
++preview rail. Under those sits one **inventory** pane the rail's
+ full width holding everything that is off; and at the foot, the item data
+ panel for the tile under the cursor. Tiles shrink from 64px to a floor of 38
+ until all of it fits the screen, so the workbench never scrolls.
+@@ -292,16 +295,17 @@ those names whichever edge the bar is on, and the rail's tag says which edge
+ that is. On a vertical bar those sections land at the top, the middle and the
+ bottom of the screen, so each bin carries that name too — `LEFT / TOP`,
+ `CENTER / MIDDLE`, `RIGHT / BOTTOM` — and you can read the bin either way
+-without having to hold the mapping in your head.
++without having to hold the mapping in your head. Saved three-section layouts
++remain readable; empty extra sections need not appear in their serialized form.
+ 
+ Drag a tile into a bin, between two tiles, or back to the inventory, or take
+ it off the bar with the small cross that comes up in its corner — the same
+ cross a saved-loadout card carries, shown while the pointer or the keyboard
+ cursor is on the tile. A tile in the inventory is already off, so it gets
+-none. With the keyboard, `← →` walk the whole bar — off the end of LEFT into CENTER, off the
+-end of RIGHT back to the start — and walk the inventory when the cursor is
++none. With the keyboard, `← →` walk all six sections in order and wrap at the
++ends, and walk the inventory when the cursor is
+ there; `↑ ↓` cross between the bar and the inventory, landing on whatever tile
+-stands nearest in the cursor's column; `1` `2` `3` send the tile under the
++stands nearest in the cursor's column; `1`–`6` send the tile under the
+ cursor to a section, `BACKSPACE` benches it, `SHIFT+← →` nudge it along,
+ `SPACE` toggles. All of that edits the preview, and the rail follows: the
+ widget under the cursor lights on the rail as well as in its bin, so a tile
+diff --git a/scan.sh b/scan.sh
+index 4f12f37..39f12cc 100755
+--- a/scan.sh
++++ b/scan.sh
+@@ -235,9 +235,12 @@ emit_bar_transparency() {
+ emit_bar_layout() {
+   jq -c '(.bar.layout // {}) | {
+     left:   ((.left   // []) | map(if type == "object" then .id else . end)),
++    centerBegin: ((.centerBegin // []) | map(if type == "object" then .id else . end)),
+     center: ((.center // []) | map(if type == "object" then .id else . end)),
+-    right:  ((.right  // []) | map(if type == "object" then .id else . end))
+-  }' <<<"$shell_doc" 2>/dev/null || echo '{"left":[],"center":[],"right":[]}'
++    centerEnd: ((.centerEnd // []) | map(if type == "object" then .id else . end)),
++    right:  ((.right  // []) | map(if type == "object" then .id else . end)),
++    tray:   ((.tray   // []) | map(if type == "object" then .id else . end))
++  }' <<<"$shell_doc" 2>/dev/null || echo '{"left":[],"centerBegin":[],"center":[],"centerEnd":[],"right":[],"tray":[]}'
+ }
+ 
+ # Widgets whose service is not there to report on. A bar widget is a plugin
+@@ -278,7 +281,7 @@ emit_bar_widgets() {
+       "omarchy.tailscale": "TS", "37signals.hey": "HEY", "omaplug": "PLUG",
+       "crmne.hyprmoncfg": "MON" } as $tags
+     | ($shell.bar.layout // {}) as $layout
+-    | [ ("left", "center", "right") as $s
++    | [ ("left", "centerBegin", "center", "centerEnd", "right", "tray") as $s
+         | ($layout[$s] // []) | to_entries[]
+         | { id: (if (.value | type) == "object" then .value.id else .value end),
+             section: $s, index: .key,
+@@ -298,7 +301,7 @@ emit_bar_widgets() {
+             category: ($w.barWidget.category // "" | tostring | .[:$maxName]),
+             description: ($w.barWidget.description // $w.description // "" | tostring | .[:$maxName]),
+             defaultSection: (($w.barWidget.defaultSection // "center")
+-              | if IN("left", "center", "right") then . else "center" end),
++              | if IN("left", "centerBegin", "center", "centerEnd", "right", "tray") then . else "center" end),
+             section: ($p.section // ""), index: ($p.index // -1),
+             settings: ($p.settings // false) })
+     | sort_by(.name)
+diff --git a/tests/barlayout.test.js b/tests/barlayout.test.js
+index 18786da..63e57bd 100644
+--- a/tests/barlayout.test.js
++++ b/tests/barlayout.test.js
+@@ -3,13 +3,42 @@ const assert = require("node:assert/strict")
+ 
+ const BarLayout = require("../BarLayout.js")
+ 
++test("saved layouts retain every bar section", () => {
++  const saved = "left:a|centerBegin:b|center:c|centerEnd:d|right:e|tray:f"
++  const decoded = BarLayout.decodeLayout(saved)
++  assert.equal(BarLayout.encodeLayout(decoded), saved)
++  assert.deepEqual(BarLayout.flattenLayout(decoded), ["a", "b", "c", "d", "e", "f"])
++})
++
++test("the tray cannot be placed or nudged into its own drawer", () => {
++  const live = BarLayout.decodeLayout("left:|center:|right:omarchy.tray")
++  assert.equal(BarLayout.place(live, "omarchy.tray", "tray", -1), null)
++  assert.equal(BarLayout.nudge(live, "omarchy.tray", 1), null)
++})
++
++for (const section of ["centerBegin", "centerEnd", "tray"]) {
++  test(`an existing widget in ${section} is disabled rather than re-enabled`, () => {
++    const live = `left:|${section}:clock|center:|right:`
++    assert.deepEqual(BarLayout.findInLayout(BarLayout.decodeLayout(live), "clock"),
++                     { section, index: 0 })
++    assert.deepEqual(BarLayout.barModsCommands(live, "left:|center:|right:"),
++                     [["omarchy-plugin-disable", "clock"]])
++  })
++
++  test(`moving a widget out of ${section} preserves it as a move`, () => {
++    assert.deepEqual(BarLayout.barModsCommands(`left:|${section}:clock|center:|right:`,
++                                              "left:clock|center:|right:"),
++                     [["omarchy-bar", "move", "clock", "--section", "left", "--index", "0"]])
++  })
++}
++
+ // The programs the model is allowed to run. argv[0] is a hardcoded literal in
+ // every command it builds, and widget ids only ever arrive as later elements,
+ // which is what makes a hostile layout string uninjectable.
+ const PROGRAMS = ["omarchy-plugin-disable", "omarchy-plugin-enable", "omarchy-bar"]
+ 
+ function layout(left, center, right) {
+-  return { left: left || [], center: center || [], right: right || [] }
++  return { left: left || [], centerBegin: [], center: center || [], centerEnd: [], right: right || [], tray: [] }
+ }
+ 
+ // ---- the encoding ----------------------------------------------------------
+@@ -49,21 +78,26 @@ test("a widget is found by section and index, or not at all", () => {
+ 
+ // ---- the edits -------------------------------------------------------------
+ 
+-test("nudging off the end of LEFT arrives at the head of CENTER", () => {
++test("nudging off the end of LEFT arrives before the center box", () => {
+   const before = layout(["a", "b"], ["c"], [])
+   const after = BarLayout.nudge(before, "b", 1)
+-  assert.deepEqual(after, layout(["a"], ["b", "c"], []))
++  const expected = layout(["a"], ["c"], [])
++  expected.centerBegin = ["b"]
++  assert.deepEqual(after, expected)
+   assert.deepEqual(before, layout(["a", "b"], ["c"], []), "the input must not be touched")
+ })
+ 
+-test("nudging back off the head of CENTER arrives at the tail of LEFT", () => {
+-  assert.deepEqual(BarLayout.nudge(layout(["a"], ["c"], []), "c", -1),
+-                   layout(["a", "c"], [], []))
++test("nudging back off the head of CENTER arrives before the center box", () => {
++  const expected = layout(["a"], [], [])
++  expected.centerBegin = ["c"]
++  assert.deepEqual(BarLayout.nudge(layout(["a"], ["c"], []), "c", -1), expected)
+ })
+ 
+ test("nudging off either end of the bar itself does nothing", () => {
+   assert.equal(BarLayout.nudge(layout(["a", "b"], [], []), "a", -1), null)
+-  assert.equal(BarLayout.nudge(layout([], [], ["d", "e"]), "e", 1), null)
++  const last = layout()
++  last.tray = ["d", "e"]
++  assert.equal(BarLayout.nudge(last, "e", 1), null)
+ })
+ 
+ test("nudging within a section swaps with the neighbour", () => {
+diff --git a/tests/run.sh b/tests/run.sh
+index cef8271..079c448 100755
+--- a/tests/run.sh
++++ b/tests/run.sh
+@@ -10,6 +10,7 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ "$ROOT/safe-io-test.sh"
+ "$ROOT/qml-test.sh"
+ "$ROOT/barlayout-test.sh"
++bash "$ROOT/barui-test.sh"
+ "$ROOT/loadouts-test.sh"
+ "$ROOT/agent-set-test.sh"
+ "$ROOT/look-test.sh"
+diff --git a/tests/scan-test.sh b/tests/scan-test.sh
+index 902e25e..da342a3 100755
+--- a/tests/scan-test.sh
++++ b/tests/scan-test.sh
+@@ -45,8 +45,11 @@ cat > "$HOME/.config/omarchy/shell.json" <<'JSON'
+     "transparent": true,
+     "layout": {
+       "left": [{"id": "omarchy.clock", "format": "HH:mm"}],
++      "centerBegin": [{"id": "acme.before", "custom": true}],
+       "center": [{"id": "omarchy.spacer"}, {"id": "omarchy.benched-service"}],
+-      "right": []
++      "centerEnd": [{"id": "acme.after"}],
++      "right": [],
++      "tray": [{"id": "acme.hidden", "custom": true}]
+     }
+   }
+ }
+@@ -88,6 +91,9 @@ stub omarchy-plugin-catalog 'cat <<CAT
+   {"id":"omarchy.spacer","name":"Spacer","kinds":["bar-widget"],"barWidget":{}},
+   {"id":"omarchy.missing-service","name":"Missing Service","kinds":["bar-widget"],"barWidget":{}},
+   {"id":"omarchy.benched-service","name":"Benched Service","kinds":["bar-widget"],"barWidget":{}},
++  {"id":"acme.before","name":"Before","kinds":["bar-widget"],"barWidget":{"defaultSection":"centerBegin"}},
++  {"id":"acme.after","name":"After","kinds":["bar-widget"],"barWidget":{"defaultSection":"centerEnd"}},
++  {"id":"acme.hidden","name":"Hidden","kinds":["bar-widget"],"barWidget":{"defaultSection":"tray"}},
+   {"id":"omarchy.notawidget","name":"Not A Widget","kinds":["service"],"barWidget":{}} ]
+ CAT'
+ 
+@@ -153,6 +159,20 @@ equals "an unplaced widget has no section" \
+ equals "raw layout keeps the spacer" \
+   "$(jq -rc '.barLayout.center' "$OUT")" '["omarchy.spacer","omarchy.benched-service"]'
+ 
++for section in centerBegin centerEnd tray; do
++  case "$section" in
++    centerBegin) id=acme.before ;;
++    centerEnd) id=acme.after ;;
++    tray) id=acme.hidden ;;
++  esac
++  equals "raw layout keeps $section" \
++    "$(jq -c --arg section "$section" '.barLayout[$section]' "$OUT")" "[\"$id\"]"
++  equals "catalogue detects placement in $section" \
++    "$(jq -r --arg id "$id" '.barWidgets[] | select(.id == $id) | .section' "$OUT")" "$section"
++  equals "catalogue preserves default section $section" \
++    "$(jq -r --arg id "$id" '.barWidgets[] | select(.id == $id) | .defaultSection' "$OUT")" "$section"
++done
++
+ # --- look: presets matched against what Hyprland reports -------------------
+ equals "look slots" "$(jq -r '.look | keys | join(",")' "$OUT")" "blur,border,corners,gaps,shadow"
+ equals "live gaps read from the css shorthand" "$(jq -c '.lookLive.general' "$OUT")" \
+@@ -288,7 +308,7 @@ equals "bar position falls back with a linked shell.json" \
+ equals "bar surface falls back with a linked shell.json" \
+   "$(jq -r '.barTransparency[] | select(.equipped) | .id' "$TMP/linkshell.json")" "false"
+ equals "bar layout is empty with a linked shell.json" \
+-  "$(jq -c '.barLayout' "$TMP/linkshell.json")" '{"left":[],"center":[],"right":[]}'
++  "$(jq -c '.barLayout' "$TMP/linkshell.json")" '{"left":[],"centerBegin":[],"center":[],"centerEnd":[],"right":[],"tray":[]}'
+ rm -f "$HOME/.config/omarchy/shell.json"
+ 
+ # The current theme's name is read the same way when the command is not there
+diff --git a/tests/barui-test.sh b/tests/barui-test.sh
+new file mode 100644
+--- /dev/null
++++ b/tests/barui-test.sh
+@@ -0,0 +1,27 @@
++#!/bin/bash
++set -euo pipefail
++
++ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
++SOURCE=${1:-$ROOT}
++SHELL_DIR="${OMARCHY_PATH:-/usr/share/omarchy}/shell"
++
++if ! command -v quickshell >/dev/null 2>&1 || [[ ! -d $SHELL_DIR/Commons ]]; then
++  printf 'barui-test: skipped (Quickshell or Omarchy imports unavailable)\n'
++  exit 0
++fi
++
++TMP=$(mktemp -d)
++trap 'rm -rf -- "$TMP"' EXIT
++mkdir "$TMP/Plugin"
++cp "$SOURCE"/{BarWorkbench,BarRail,ItemData,TechFrame}.qml "$TMP/Plugin/"
++ln -s "$SHELL_DIR/Commons" "$TMP/Commons"
++cp "$ROOT/tests/barui.qml" "$TMP/shell.qml"
++if ! output=$(QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software timeout 20 quickshell --no-color -p "$TMP" 2>&1); then
++  printf '%s\n' "$output" >&2
++  exit 1
++fi
++if [[ $output != *"barui-test: ok"* || $output == *"TypeError:"* || $output == *"ReferenceError:"* || $output == *"ERROR qml:"* ]]; then
++  printf '%s\n' "$output" >&2
++  exit 1
++fi
++printf 'barui-test: ok\n'
+diff --git a/tests/barui.qml b/tests/barui.qml
+new file mode 100644
+--- /dev/null
++++ b/tests/barui.qml
+@@ -0,0 +1,86 @@
++import QtQuick
++import Quickshell
++import "Plugin" as Plugin
++
++ShellRoot {
++  id: root
++
++  property var fixtureLayout: ({
++    left: ["left"], centerBegin: ["before"], center: ["clock"],
++    centerEnd: ["after"], right: ["right"], tray: ["hidden"]
++  })
++  property var fixtureHost: ({
++    previewBarLayout: root.fixtureLayout,
++    inventory: { barWidgets: ["left", "before", "clock", "after", "right", "hidden", "off"].map(function(id) {
++      return { id: id, name: id }
++    }) },
++    fg: "#ffffff", muted: "#888888", accent: "#00ff00", warn: "#ffff00",
++    good: "#00ff00", line: "#888888", uiFont: "monospace",
++    paneBg: "transparent", paneBgFocused: "transparent",
++    previewBarPosition: "top", previewBarTransparent: false,
++    previewWallpaper: "", previewFont: "monospace", previewFontScale: 1,
++    previewThemeObject: null, widgetGlyphs: {},
++    currentSlot: { id: "barMods" }, preview: {}, staged: {},
++    workbenchOpen: true, barModsSummary: "", barModsBreakdown: "",
++    itemsFor: function() { return [] },
++    selectedItem: function() { return null },
++    isFitted: function() { return false },
++    equippedId: function() { return "" }
++  })
++
++  Plugin.BarWorkbench {
++    id: workbench
++    width: 1500
++    height: 1000
++  }
++
++  Plugin.BarRail {
++    id: rail
++    width: 1500
++    height: 50
++    layout: root.fixtureLayout || ({})
++  }
++
++  function check(condition, message) {
++    if (!condition) throw new Error(message)
++  }
++
++  function checkRail() {
++    var groups = Array.from(rail.children).filter(function(child) { return child.ids !== undefined })
++    var ids = []
++    for (var i = 0; i < groups.length; i++) ids = ids.concat(groups[i].ids)
++    check(ids.join(",") === "left,before,clock,after,right", "rail omits a visible section or exposes drawer contents")
++    var middle = groups.filter(function(group) { return group.ids[0] === "clock" })[0]
++    check(Math.abs(middle.x + middle.width / 2 - rail.width / 2) < 1, "clock is not centered horizontally")
++    check(Math.abs(middle.y + middle.height / 2 - rail.height / 2) < 1, "clock is not centered vertically")
++  }
++
++  Component.onCompleted: {
++    workbench.host = root.fixtureHost
++    Qt.callLater(function() {
++    try {
++      check(workbench.bins.map(function(bin) { return bin.id }).join(",")
++        === "left,centerBegin,center,centerEnd,right,tray", "workbench omits a bar section")
++      check(workbench.benchIds.join(",") === "off", "active widgets are incorrectly benched")
++      check(workbench.whereIs("hidden").zone === "tray", "hidden widget is not in the tray bin")
++      checkRail()
++      rail.horizontal = false
++      rail.width = 50
++      rail.height = 1000
++      Qt.callLater(function() {
++        try {
++          checkRail()
++          console.log("barui-test: ok")
++          Qt.exit(0)
++        } catch (error) {
++          console.error(error.message)
++          Qt.exit(1)
++        }
++      })
++    } catch (error) {
++      console.error(error.message)
++      Qt.exit(1)
++    }
++    })
++  }
++}

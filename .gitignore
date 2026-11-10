@@ -1,1 +1,6 @@
 .DS_Store
+__pycache__/
+*.py[cod]
+/omarchy/maintenance/restic/config.json
+/omarchy/maintenance/restic/password
+/omarchy/maintenance/restic/credentials.env

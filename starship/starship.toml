@@ -1,0 +1,374 @@
+#  Starship prompt
+#
+# Two lines. Line one is context — where you are, what git thinks, which
+# runtimes this directory actually uses — with timing and exit status pushed to
+# the right margin by the `fill` module. Line two is a bare `❯`, so every
+# command starts at the same column and copy-pasting a command never drags a
+# path along with it.
+#
+# `right_format` is deliberately unused: in bash, starship's right prompt only
+# works under ble.sh (see `starship init bash --print-full-init`), which isn't
+# installed here. `fill` works in every shell.
+#
+# Colours are ANSI names ("cyan", "bright-black"), never hex. Omarchy themes
+# repaint the terminal's 16-colour palette, so a named colour re-themes itself
+# with `omarchy theme set` for free. Hex would pin the prompt to one theme.
+#
+# Nothing renders unless it has something to say: language versions appear only
+# in a project that uses them, docker context only when it isn't `default`,
+# duration only past 2s. A quiet directory gets a quiet prompt.
+
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+
+# Omarchy's default was 200ms, which is tight enough that `git status` in a
+# large repo times out and starship prints a warning where the prompt should be.
+command_timeout = 1000
+scan_timeout = 30
+
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_state\
+$git_status\
+$nodejs$ruby$python$golang$rust$elixir$erlang$java$php$lua$deno$bun$zig\
+$mise\
+$direnv\
+$docker_context\
+$container\
+$nix_shell\
+$fill\
+$shlvl\
+$jobs\
+$cmd_duration\
+$status\
+$time\
+$line_break\
+$character"""
+
+# ── Right margin ────────────────────────────────────────────────────────────
+# Everything after $fill is pushed to the right edge. A blank symbol keeps the
+# gap invisible; "·" or "─" here would draw a rule across the terminal instead.
+[fill]
+symbol = " "
+style = "bright-black"
+
+# ── Location ────────────────────────────────────────────────────────────────
+[directory]
+# 3 (not Omarchy's 2) so ~/Work/clients/acme still shows "clients/" — the
+# segment that usually says which project you're in.
+truncation_length = 3
+truncation_symbol = "…/"
+truncate_to_repo = true
+style = "cyan"
+# Inside a repo the root is bold and the path within it isn't, so the repo name
+# stays findable when you're six directories deep.
+repo_root_style = "bold cyan"
+repo_root_format = "[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) "
+read_only = " 󰌾"
+read_only_style = "red"
+
+# Icons are prefixed, not substituted for the name. A bare "󰃖 " with the word
+# dropped looks tidy right up until two icon-only directories sit side by side
+# and the prompt no longer says where you are.
+[directory.substitutions]
+"~/Work" = "󰃖 Work"
+"Documents" = "󰈙 Documents"
+"Downloads" = " Downloads"
+"Pictures" = " Pictures"
+
+# ── Identity: only when it isn't obvious ────────────────────────────────────
+# Local shells as yourself show nothing. Over SSH, or as root, both appear —
+# the two cases where running the wrong command costs the most.
+[username]
+show_always = false
+style_user = "bold yellow"
+style_root = "bold red"
+format = "[$user]($style)"
+
+[hostname]
+ssh_only = true
+ssh_symbol = " "
+format = "[@$ssh_symbol$hostname]($style) "
+style = "bold yellow"
+
+# ── Git ─────────────────────────────────────────────────────────────────────
+[git_branch]
+symbol = " "
+format = "[$symbol$branch]($style) "
+style = "italic cyan"
+truncation_length = 24
+truncation_symbol = "…"
+
+# Mid-operation state: rebase, merge, cherry-pick, bisect. Yellow because this
+# is the "your repo is halfway through something" signal, and the step counter
+# tells you how far.
+[git_state]
+format = '[\($state( $progress_current/$progress_total)\)]($style) '
+style = "bold yellow"
+rebase = "rebasing"
+merge = "merging"
+revert = "reverting"
+cherry_pick = "cherry-picking"
+bisect = "bisecting"
+am = "am"
+am_or_rebase = "am/rebase"
+
+[git_status]
+format = '([$all_status$ahead_behind]($style))'
+style = "cyan"
+conflicted = "=${count} "
+ahead = "⇡${count} "
+behind = "⇣${count} "
+diverged = "⇕⇡${ahead_count}⇣${behind_count} "
+untracked = "?${count} "
+stashed = "\\$${count} "
+modified = "●${count} "
+staged = "+${count} "
+renamed = "»${count} "
+deleted = "✘${count} "
+# Empty on purpose: the branch name already proves you're in a repo, so a clean
+# tree should add nothing. Omarchy's default printed a check mark here.
+up_to_date = ""
+# Skips a recursive walk of every submodule on each prompt.
+ignore_submodules = true
+
+# Added/removed line counts. Off by default — it costs a `git diff --shortstat`
+# on every prompt, which is the one git call that hurts in a big repo. Add
+# $git_metrics after $git_status in `format` above if you want it.
+[git_metrics]
+disabled = true
+added_style = "bold green"
+deleted_style = "bold red"
+format = '([+$added]($added_style) )([-$deleted]($deleted_style) )'
+
+# ── Runtimes ────────────────────────────────────────────────────────────────
+# Each appears only when the directory actually contains that language's files,
+# so this whole block is invisible in ~ and shows one or two entries in a
+# project. Versions come from mise where mise manages them.
+[nodejs]
+symbol = " "
+style = "green"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+# Don't announce node in every directory that happens to hold a .json file.
+detect_extensions = ["js", "mjs", "cjs", "ts", "mts", "cts", "jsx", "tsx"]
+detect_files = ["package.json", ".node-version", ".nvmrc"]
+
+[ruby]
+symbol = " "
+style = "red"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[python]
+symbol = " "
+style = "yellow"
+format = "[$symbol($version )(\\($virtualenv\\) )]($style)"
+version_format = "${raw}"
+# Bare .py files are everywhere; a project marker is the honest signal.
+detect_extensions = []
+detect_files = ["pyproject.toml", "requirements.txt", "Pipfile", "setup.py", "tox.ini", ".python-version"]
+
+[golang]
+symbol = " "
+style = "cyan"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[rust]
+symbol = " "
+style = "red"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[elixir]
+symbol = " "
+style = "purple"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[erlang]
+symbol = " "
+style = "red"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[java]
+symbol = " "
+style = "red"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[php]
+symbol = " "
+style = "purple"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[lua]
+symbol = " "
+style = "blue"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[deno]
+symbol = " "
+style = "green"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[bun]
+symbol = " "
+style = "yellow"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+[zig]
+symbol = " "
+style = "yellow"
+format = "[$symbol($version )]($style)"
+version_format = "${raw}"
+
+# ── Environment ─────────────────────────────────────────────────────────────
+# mise is Omarchy's runtime manager (activated in default/bash/init). This shows
+# only that a mise environment is active; the versions themselves come from the
+# language modules above.
+[mise]
+symbol = "󰐰 "
+style = "bold purple"
+format = "[$symbol$health]($style) "
+# Off by default: with mise activated globally it would print on every prompt,
+# and the language modules already report the versions it picked. Flip to false
+# if you juggle several mise environments and want the confirmation.
+disabled = true
+
+[direnv]
+symbol = "󰙨 "
+style = "bold yellow"
+format = "[$symbol$loaded/$allowed]($style) "
+# direnv isn't installed here (60-tools.bash guards its hook). Turning this off
+# costs nothing today and is the switch to flip after `pacman -S direnv`.
+disabled = true
+
+# Only when the context isn't `default` — i.e. when a `docker` command is about
+# to talk to a machine that isn't this one.
+[docker_context]
+symbol = " "
+style = "blue"
+format = "[$symbol$context]($style) "
+only_with_files = false
+
+# Toolbox, distrobox, a systemd-nspawn container: says "this isn't your host".
+[container]
+symbol = "󰡨 "
+style = "bold yellow"
+format = "[$symbol$name]($style) "
+
+[nix_shell]
+symbol = " "
+style = "blue"
+format = "[$symbol$state( \\($name\\))]($style) "
+
+[kubernetes]
+symbol = "󱃾 "
+style = "bold blue"
+format = '[$symbol$context( \($namespace\))]($style) '
+# kubectl isn't installed. Set to false when it is — a prompt that names the
+# cluster is the cheapest guard against running a command against production.
+disabled = true
+
+[aws]
+symbol = " "
+style = "bold yellow"
+format = '[$symbol($profile )(\($region\) )]($style)'
+disabled = true
+
+# ── Right margin: state after the last command ──────────────────────────────
+# Nesting depth. Threshold 3 keeps it quiet for a single subshell and speaks up
+# once you've genuinely lost track of how many shells deep you are.
+[shlvl]
+disabled = false
+threshold = 3
+symbol = "❯"
+repeat = true
+format = "[$symbol]($style) "
+style = "bold yellow"
+
+# Backgrounded jobs — the ones a `exit` would otherwise warn you about.
+[jobs]
+symbol = "󰜎 "
+style = "bold blue"
+number_threshold = 1
+symbol_threshold = 1
+format = "[$symbol$number]($style) "
+
+# Only for commands slow enough that you looked away.
+[cmd_duration]
+min_time = 2000
+format = "[󰔟 $duration]($style) "
+style = "yellow"
+show_milliseconds = false
+# Long-running interactive programs (nvim, psql, a dev server) aren't
+# "slow commands" — timing them is noise.
+show_notifications = false
+
+# Exit code of the last command, as a number rather than starship's word-map:
+# "✗1" reads faster than "✗ERROR", and for anything unusual the raw number is
+# what you'd search for anyway. pipestatus shows every stage of a failed
+# pipeline, which is the case where a single code lies to you.
+[status]
+disabled = false
+symbol = "✗"
+format = "[$symbol$status]($style) "
+map_symbol = false
+pipestatus = true
+pipestatus_separator = "|"
+# Each stage renders as a bare number; the group gets one ✗ and one pair of
+# brackets. Without segment_format every stage repeats the symbol ("✗0 |✗2 |✗1").
+pipestatus_segment_format = "[$status]($style)"
+pipestatus_format = "[$symbol\\[$pipestatus\\]]($style) "
+style = "bold red"
+# Nothing on success; the `❯` already turns red on failure.
+success_symbol = ""
+
+[time]
+disabled = false
+time_format = "%R"
+format = "[$time]($style)"
+style = "bright-black"
+
+# ── The input line ──────────────────────────────────────────────────────────
+# Bare and unchanging, except for colour: cyan after a success, red after a
+# failure. That single bit of colour is why $status can stay terse.
+[character]
+success_symbol = "[❯](bold cyan)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+vimcmd_replace_symbol = "[❮](bold purple)"
+vimcmd_visual_symbol = "[❮](bold yellow)"
+
+# ── Deliberately off ────────────────────────────────────────────────────────
+# Version of the package in the current directory. Reads package.json /
+# Cargo.toml / *.gemspec on every prompt, and the number is almost never what
+# you needed to know.
+[package]
+disabled = true
+
+# Battery: this is a desktop-first config and Omarchy's bar already shows it.
+# Set disabled = false on a laptop.
+[battery]
+disabled = true
+format = "[$symbol$percentage]($style) "
+[[battery.display]]
+threshold = 20
+style = "bold red"
+
+[memory_usage]
+disabled = true
+
+[shell]
+disabled = true
