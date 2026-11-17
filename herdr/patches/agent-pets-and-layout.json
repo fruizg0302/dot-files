@@ -1,0 +1,21 @@
+{
+  "captured": "2026-11-17",
+  "base": "Existing customized Pixel HQ installation, before today's agent and pet edits",
+  "files": [
+    {
+      "path": "mods/company-agents/main.js",
+      "base_sha256": "93aef66544b69c1e03fc04c83db83685d458e33b13e71b59e128c1257faa554b",
+      "current_sha256": "8b5f5002c883fddf4c31abd716cdc0c2fcbe83b465fb404956b0f0cab10fb90a"
+    },
+    {
+      "path": "mods/company-agents/duck.js",
+      "base_sha256": "1dfa8d266494771455c7e77f0d3ceb750af47c749a7851d6264fdf5b431ccfdf",
+      "current_sha256": "1c1d1069301fb2b2f7fd5509f2f63eb95ebe8fc3e9a75785ba268a8f6a777615"
+    },
+    {
+      "path": "layouts/pixel-hq.json",
+      "base_sha256": "7208b325b28790c0198cbe93b2eaeb94614140e43a32844c50271a3ac3deea74",
+      "current_sha256": "49af38a76798b9a22a6650cf60413c49d9e91b4f73f94c4a778fcefb028a6f76"
+    }
+  ]
+}

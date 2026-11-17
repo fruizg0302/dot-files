@@ -1,0 +1,23 @@
+{
+  "programs": {
+    "claude": {
+      "name": "Claude",
+      "run": ["claude"]
+    },
+    "zcode": {
+      "name": "ZCode",
+      "tile": "#2563eb",
+      "color": "#ffffff",
+      "match": ["zcode-cli", "zcode.cjs"],
+      "run": ["zcode"]
+    },
+    "droid": {
+      "name": "Droid",
+      "icon": "icons/shell.svg",
+      "tint": true,
+      "tile": "#f97316",
+      "color": "#ffffff",
+      "run": ["droid"]
+    }
+  }
+}

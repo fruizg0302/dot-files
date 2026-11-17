@@ -1,0 +1,18 @@
+id = "zcode.integration"
+name = "ZCode"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Recognize ZCode as an agent in Herdr: process detection override plus lifecycle state (working/blocked/idle) reported from ZCode hooks."
+platforms = ["linux", "macos"]
+
+[[actions]]
+id = "setup"
+title = "ZCode: install Herdr integration"
+contexts = ["workspace"]
+command = ["sh", "scripts/setup.sh"]
+
+[[actions]]
+id = "uninstall"
+title = "ZCode: remove Herdr integration"
+contexts = ["workspace"]
+command = ["sh", "scripts/setup.sh", "--uninstall"]

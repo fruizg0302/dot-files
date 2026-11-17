@@ -1,0 +1,13 @@
+diff --git a/hooks/session-start b/hooks/session-start
+index d88e50f..1eee2c0 100755
+--- a/hooks/session-start
++++ b/hooks/session-start
+@@ -78,7 +78,7 @@ if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+   emit_json '{\n  "additional_context": "%s"\n}\n' "$session_context"
+ elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ] && [ -z "${MUSE_PLUGIN_ROOT:-}" ]; then
+   # Claude Code sets CLAUDE_PLUGIN_ROOT without COPILOT_CLI/MUSE_PLUGIN_ROOT
+-  emit_json '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
++  emit_json '{\n  "suppressOutput": true,\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
+ elif [ -n "${MUSE_PLUGIN_ROOT:-}" ]; then
+   # Muse sets MUSE_PLUGIN_ROOT — try Claude-style nested output for Muse Spark
+   emit_json '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"

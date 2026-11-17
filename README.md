@@ -4,6 +4,9 @@ Personal configuration for zsh, Neovim, oh-my-posh, ripgrep, and Ghostty. The Ne
 
 ## Agent status lines and workspace layout
 
+- [Herdr agent menus, pets, and ZCode activity](herdr/README.md),
+  [ZCode launcher and permission mode](zcode/README.md), and
+  [quiet Droid startup](factory/README.md): selected changes from 2026-11-17.
 - [Codex and Claude Code status lines](docs/status-lines.md): current settings,
   the Claude theme, and instructions for merging them into an existing setup.
 - [Work directory layout](docs/work-tree.md): the first-level `~/Work` folders

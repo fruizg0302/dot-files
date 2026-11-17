@@ -1,0 +1,9 @@
+# Agent detection override for ZCode (zai-org/ZCode CLI).
+# Seeded by scripts/setup.sh into the agent-detection config dir.
+# Verify with: herdr agent explain <pane>
+# Field names follow herdr's agent detection manifest schema; verify with:
+#   herdr api schema --json
+[[agent]]
+name = "zcode"
+match_cmdline = ["zcode-cli"]
+alt_cmdline = ["zcode"]
