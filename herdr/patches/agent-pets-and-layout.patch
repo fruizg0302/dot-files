@@ -1,0 +1,163 @@
+--- a/mods/company-agents/main.js
++++ b/mods/company-agents/main.js
+@@ -120,6 +120,8 @@
+   for (const item of pool) {
+     if (!item) continue;
+     const s = String(item).toLowerCase();
++    if (/droid/.test(s)) return "droid";
++    if (/zcode/.test(s)) return "zcode";
+     if (/claude/.test(s)) return "claude";
+     if (/antigravity|agy/.test(s)) return "antigravity";
+     if (/opencode/.test(s)) return "opencode";
+@@ -791,7 +793,7 @@
+     cx.notify();
+     try {
+       const { path, branch } = await hire(exec, { ticket: this.ticketInput.value(), repo: this.repoInput.value() });
+-      const argv = { claude: ["claude"], codex: ["codex"], opencode: ["opencode"], agy: ["agy"] }[h.program] ?? [h.program];
++      const argv = [h.program];
+       run("tab.new", { name: branch, folder: path, argv, space: spaces().find((x) => x.active)?.id });
+       h.open = false;
+       this.ticketInput.set_value("");
+@@ -1606,9 +1608,9 @@
+             .child(div().font_family(mono).font_bold().text_size(10).text_color("#89b4fa").child("HIRE STAFF · NEW WORKTREE"))
+             .child(box(this.ticketInput))
+             .child(box(this.repoInput))
+-            .child(h_flex().gap(4).children(["claude", "codex", "opencode", "agy"].map((pg) => div().id(`hire-${pg}`).px(8).h(22).flex().items_center().cursor_pointer().border_1()
++            .child(h_flex().gap(4).children([["claude", "Claude"], ["zcode", "ZCode"], ["droid", "Droid"]].map(([pg, name]) => div().id(`hire-${pg}`).px(8).h(22).flex().items_center().cursor_pointer().border_1()
+               .border_color(h.program === pg ? "#89b4fa" : "#45475a").bg(h.program === pg ? "#89b4fa22" : "#181825").text_size(10.5).font_family(mono).text_color(h.program === pg ? "#89b4fa" : "#a6adc8")
+-              .on_click((_e, cx) => { h.program = pg; cx.notify(); }).child(pg))))
++              .on_click((_e, cx) => { h.program = pg; cx.notify(); }).child(name))))
+             .when(Boolean(h.error), (e2) => e2.child(div().text_size(10.5).text_color("#ff5370").child(h.error)))
+             .child(h_flex().gap(6).child(btn("hire-go", h.busy ? "Creating..." : "Hire", "#89b4fa", "#11111b", (_e, cx) => this.doHire(cx)))
+               .child(btn("hire-cancel", "Cancel", "#313244", "#cdd6f4", (_e, cx) => this.openHire(cx))))));
+--- a/mods/company-agents/duck.js
++++ b/mods/company-agents/duck.js
+@@ -1,4 +1,4 @@
+-// The Claude crab at work, in the same pixel rectangles and API the Pond duck used.
++// Agent pets at work, in the same pixel rectangles and API the Pond duck used.
+ // Herdr draws SVG still, so every motion here is a native .loop():
+ // no timers, no re-renders, and it only runs while the crab is on screen.
+ //
+@@ -26,9 +26,54 @@
+ const BADGE = "#F4E9DC";
+ const BADGE_TOP = "#8C4A33";
+ 
+-// One species per agent program: Claude is the orange crab, Codex a blue terminal robot, OpenCode a penguin, Antigravity the rainbow arch, the rest sheep.
++const DROID = [
++  [118, 8, 12, 20, "#42434f"], [108, 0, 32, 12, "#ff7817"],
++  [98, 20, 52, 10, "#ff7817"],
++  [52, 28, 144, 92, "#42434f"], [38, 42, 172, 64, "#42434f"],
++  [52, 36, 144, 70, "#777888"], [46, 48, 156, 46, "#777888"],
++  [54, 46, 140, 52, "#1c1d29"], [62, 40, 124, 64, "#1c1d29"],
++  [42, 54, 8, 30, "#5a5b6b"], [198, 54, 8, 30, "#5a5b6b"],
++  [28, 54, 10, 34, "#ff7817"], [210, 54, 10, 34, "#ff7817"],
++  [58, 32, 132, 6, "#8b8d9e"],
++  [102, 120, 44, 12, "#343541"],
++  [66, 132, 116, 68, "#343541"], [76, 140, 96, 52, "#ff7817"],
++  [82, 146, 10, 36, "#e96712"], [104, 140, 38, 10, "#42434f"],
++  [144, 154, 24, 30, "#555663"], [150, 160, 18, 18, "#fff0d0"],
++  [96, 184, 42, 6, "#dc5b12"],
++  [58, 136, 12, 28, "#666777"], [178, 136, 12, 28, "#666777"],
++];
++
++const FOX = [
++  [46, 0, 24, 12, "#0750c8"], [46, 12, 36, 36, "#0878f5"],
++  [38, 24, 48, 32, "#0878f5"], [54, 12, 12, 28, "#a44bf0"],
++  [62, 28, 16, 20, "#a44bf0"],
++  [178, 0, 24, 12, "#0750c8"], [166, 12, 36, 36, "#0878f5"],
++  [162, 24, 48, 32, "#0878f5"], [182, 12, 12, 28, "#a44bf0"],
++  [170, 28, 16, 20, "#a44bf0"],
++  [46, 42, 156, 60, "#0878f5"], [38, 54, 172, 36, "#0878f5"],
++  [30, 78, 36, 18, "#fff0d0"], [182, 78, 36, 18, "#fff0d0"],
++  [46, 96, 156, 16, "#fff0d0"], [62, 108, 124, 12, "#f1dfbb"],
++  [86, 86, 76, 18, "#fff0d0"], [114, 88, 20, 12, "#252633"],
++  [122, 100, 4, 8, "#252633"],
++  [76, 120, 96, 80, "#0750c8"], [84, 126, 80, 72, "#0878f5"],
++  [102, 126, 44, 36, "#fff0d0"], [110, 162, 28, 16, "#fff0d0"],
++  [118, 178, 12, 10, "#fff0d0"],
++];
++
++const FOX_TAIL = [
++  [180, 140, 34, 52, "#0750c8"], [200, 120, 34, 60, "#0750c8"],
++  [214, 94, 28, 48, "#0750c8"], [226, 74, 22, 34, "#0750c8"],
++  [188, 144, 24, 38, "#0878f5"], [208, 126, 20, 44, "#0878f5"],
++  [220, 104, 22, 34, "#0878f5"],
++  [230, 64, 18, 16, "#fff0d0"], [222, 76, 26, 18, "#fff0d0"],
++  [218, 90, 14, 12, "#fff0d0"],
++];
++
++// One species per agent program; unrecognized programs keep the sheep.
+ const SPECIES = {
+   crab: { body: "#D97757", shade: "#B5593B", eye: "#2A1A14", badge: "#F4E9DC" },
++  droid: { body: "#42434f", shade: "#ff7817", eye: "#00d9df", badge: "#fff0d0", art: DROID, arms: [22, 202, 26], legs: [72, 142], legW: 34 },
++  fox: { body: "#0878f5", shade: "#a44bf0", eye: "#1c1d29", badge: "#fff0d0", art: FOX, tail: FOX_TAIL, eyes: [74, 154], arms: [26, 202, 22], legs: [78, 142], legW: 30 },
+   bot: { body: "#5B6CF0", shade: "#4553C9", eye: "#DDE4FF", badge: "#F4E9DC", bot: true, screen: "#1B2140", glyph: "#DDE4FF", legs: [88, 152], legW: 30 },
+   penguin: { body: "#35425E", shade: "#2E3A52", eye: "#1B2130", badge: "#F2A33A", round: true },
+   arch: { body: "#3186FF", shade: "#E8743B", eye: "#14131f", badge: "#F4E9DC", arch: true, legs: [70, 126], legW: 54 },
+@@ -37,6 +82,8 @@
+ 
+ const AGENTS = [
+   { match: (k) => k.includes("claude"), species: "crab", role: "Staff Engineer" },
++  { match: (k) => k.includes("droid"), species: "droid" },
++  { match: (k) => k.includes("zcode"), species: "fox" },
+   { match: (k) => k.includes("codex"), species: "bot", role: "Code Reviewer" },
+   { match: (k) => k.includes("opencode"), species: "penguin", role: "Platform Engineer" },
+   { match: (k) => k.includes("antigravity") || k === "agy", species: "arch", role: "Systems Architect" },
+@@ -194,14 +241,21 @@
+           : [rect(86, 68, 20, 28, EYE), rect(146, 68, 20, 28, EYE), rect(89, 71, 8, 8, WH), rect(149, 71, 8, 8, WH), rect(99, 87, 4, 4, "#ffffffaa"), rect(159, 87, 4, 4, "#ffffffaa")]),
+     rect(114, 100, 22, 7, "#F5A623"), rect(118, 107, 14, 6, "#E0861C"), rect(62, 102, 18, 8, "#F49AA8"), rect(170, 102, 18, 8, "#F49AA8"),
+   ];
+-  const eyes2 = sp.arch
++  const petEyes = sp.art ? (sp.eyes ?? [66, 156]).flatMap((x) => cheer
++    ? [rect(x, 58, 6, 10, EYE), rect(x + 6, 52, 12, 6, EYE), rect(x + 18, 58, 6, 10, EYE)]
++    : rest && !urging
++      ? [rect(x, 66, 26, 6, EYE)]
++      : [rect(x, 50, 22, urging ? 32 : 26, EYE), ...(sp.tail || urging ? [rect(x + 4, 54, 6, 6, "#ffffff")] : [])]) : [];
++  const eyes2 = sp.art
++    ? petEyes
++    : sp.arch
+     ? [...archFace, rect(116, 104, 22, 8, "#ef6a7e"), rect(170, 104, 22, 8, "#ef6a7e")]
+     : sp.round
+       ? roundFace
+       : eyes;
+ 
+   // Claws. Typing: they alternate. Waving: the right one waves up. Cheering: both flap high.
+-  const [LX, RX, CW] = sp.arch ? [26, 194, 30] : sp.round ? [16, 208, 26] : [0, 225, 25];
++  const [LX, RX, CW] = sp.arms ?? (sp.arch ? [26, 194, 30] : sp.round ? [16, 208, 26] : [0, 225, 25]);
+   let leftClaw = rect(LX, 122, CW, 40, SHADE);
+   let rightClaw = rect(RX, 122, CW, 40, SHADE);
+   if (typing) {
+@@ -306,9 +360,12 @@
+ 
+   // The body group: everything but the legs. It bobs, or hops when cheering.
+   let group = div().absolute().left(px(ROOM)).top(0).w(px(250)).h(px(207))
++    .when(Boolean(sp.tail), (el) => el.child(motion(div().absolute().left(0).top(0).w(px(250)).h(px(207))
++      .children(sp.tail.map(([x, y, w, h, c]) => rect(x, y, w, h, c))), "left", { from: 0, to: px(3), period: cheer ? 300 : 1200, easing: "ease-in-out" })))
+     .child(leftClaw)
+     .child(rightClaw)
+-    .when(!sp.bot && !sp.arch && !sp.round, (el) => el.child(rect(25, 0, 200, 200, BODY)))
++    .when(!sp.bot && !sp.arch && !sp.round && !sp.art, (el) => el.child(rect(25, 0, 200, 200, BODY)))
++    .when(Boolean(sp.art), (el) => el.children(sp.art.map(([x, y, w, h, c]) => rect(x, y, w, h, c))))
+     .when(Boolean(sp.arch), (el) => el.children(ARCH.map(([x, y, w, h, c]) => rect(x, y, w, h, c))))
+     .when(Boolean(sp.round), (el) => el.children(PENGUIN.map(([x, y, w, h, c]) => rect(x, y, w, h, c))))
+     .when(Boolean(sp.bot), (el) => el
+@@ -322,7 +379,7 @@
+     .when(Boolean(sp.face), (el) => el.child(rect(64, 22, 112, 88, sp.face)).child(rect(14, 40, 26, 18, sp.face)).child(rect(200, 40, 26, 18, sp.face)))
+     .children(eyes2)
+     // company badge on a lanyard, hanging at the right side of the chest
+-    .when(!sp.bot && !sp.arch && !sp.round, (el) => el.child(rect(181, 82, 6, 38, BADGE_TOP)).child(rect(163, 120, 42, 56, BADGE)).child(rect(163, 120, 42, 12, BADGE_TOP)).child(rect(174, 140, 20, 16, SHADE)).child(rect(170, 162, 28, 6, SHADE)))
++    .when(!sp.bot && !sp.arch && !sp.round && !sp.art, (el) => el.child(rect(181, 82, 6, 38, BADGE_TOP)).child(rect(163, 120, 42, 56, BADGE)).child(rect(163, 120, 42, 12, BADGE_TOP)).child(rect(174, 140, 20, 16, SHADE)).child(rect(170, 162, 28, 6, SHADE)))
+     .when(Boolean(props), (el) => el.child(props));
+   group = cheer
+     ? motion(group, "top", { from: 0, to: px(-18), period: 300, easing: "ease-in-out" })
+--- a/layouts/pixel-hq.json
++++ b/layouts/pixel-hq.json
+@@ -82,7 +82,7 @@
+           "id": "tabs",
+           "type": "block",
+           "content": {
+-            "mod": "tabs"
++            "mod": "company-tabs"
+           },
+           "size": {
+             "px": 42
