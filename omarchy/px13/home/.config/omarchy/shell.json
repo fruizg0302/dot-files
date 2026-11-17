@@ -1,0 +1,358 @@
+{
+  "bar": {
+    "background": "opaque",
+    "layout": {
+      "center": [
+        {
+          "id": "ilyazar.btop"
+        },
+        {
+          "format": "ddd d MMM HH:mm",
+          "formatAlt": "d MMMM 'W'ww yyyy",
+          "id": "omarchy.clock",
+          "verticalFormat": "HH\n—\nmm"
+        }
+      ],
+      "centerBegin": [
+        {
+          "id": "omarchy.indicators"
+        }
+      ],
+      "centerEnd": [
+        {
+          "cities": [
+            {
+              "name": "General",
+              "zone": "Mexico/General"
+            },
+            {
+              "lat": 48.85341,
+              "lon": 2.3488,
+              "name": "Paris",
+              "region": "Île-de-France Region, FR",
+              "zone": "Europe/Paris"
+            },
+            {
+              "name": "Los Angeles",
+              "zone": "America/Los_Angeles"
+            },
+            {
+              "lat": 40.71427,
+              "lon": -74.00597,
+              "name": "New York",
+              "region": "US",
+              "zone": "America/New_York"
+            },
+            {
+              "lat": 32.5027,
+              "lon": -117.00371,
+              "name": "Tijuana",
+              "region": "Baja California, MX",
+              "zone": "America/Tijuana"
+            },
+            {
+              "lat": 29.08874,
+              "lon": -110.96677,
+              "name": "Hermosillo",
+              "region": "Sonora, MX",
+              "zone": "America/Hermosillo"
+            }
+          ],
+          "id": "omarchy.elsewhen"
+        },
+        {
+          "id": "omarchy.weather"
+        },
+        {
+          "id": "io.github.mich-nduka.omaports"
+        },
+        {
+          "id": "wowzontle.inference"
+        },
+        {
+          "id": "omarchy.system-update"
+        }
+      ],
+      "left": [
+        {
+          "id": "omarchy.menu"
+        },
+        {
+          "id": "omarchy.workspaces"
+        },
+        {
+          "colorCodeUsage": true,
+          "id": "akitaonrails.ai-usagebar",
+          "lastSelectedEntryId": "anthropic",
+          "showProvider": false
+        }
+      ],
+      "right": [
+        {
+          "id": "io.github.v-eagle.omamp"
+        },
+        {
+          "hidden": [
+            "Claude_status_icon_1"
+          ],
+          "id": "omarchy.tray"
+        },
+        {
+          "id": "io.github.grichard99.omaproton-vpn"
+        },
+        {
+          "id": "omarchy.keyboard-layout"
+        },
+        {
+          "id": "robzolkos.github"
+        },
+        {
+          "id": "37signals.hey",
+          "openAction": "tui"
+        },
+        {
+          "id": "omarchy.bluetooth"
+        },
+        {
+          "herdrPath": "/home/wowzontle/.local/bin/herdr",
+          "id": "io.github.eszanon.herdr"
+        },
+        {
+          "id": "omarchy.network"
+        },
+        {
+          "id": "omarchy.audio"
+        },
+        {
+          "id": "wowzontle.monitor"
+        },
+        {
+          "id": "omarchy.power"
+        }
+      ],
+      "tray": [
+        {
+          "accentMode": "theme",
+          "barPadding": 0,
+          "centerLayout": "orbit",
+          "clockEnabled": true,
+          "clockFont": "Liberation Sans",
+          "dateColor": "",
+          "dateFont": "",
+          "dateOffsetX": 0,
+          "dateOffsetY": 0,
+          "dateScale": 1,
+          "hourColor": "",
+          "hourFont": "",
+          "hourOffsetX": 0,
+          "hourOffsetY": 0,
+          "hourScale": 0.75,
+          "id": "mash2rafi.kronos",
+          "labelFont": "JetBrainsMono Nerd Font,JetBrainsMono NF",
+          "margin": 12,
+          "minuteCapsuleAngleOffset": 12,
+          "minuteCapsuleColor": "",
+          "minuteCapsuleFont": "",
+          "minuteCapsuleRadiusOffset": 1,
+          "minuteCapsuleScale": 1.7,
+          "minuteRingColor": "",
+          "minuteRingOpacity": 1,
+          "perMonitorScale": false,
+          "position": "top-left",
+          "ringArcDegrees": 120,
+          "ringDiameter": 0.29,
+          "ringGap": 57,
+          "ringLabelColor": "",
+          "ringLabelScale": 1,
+          "ringRotationOffset": 0,
+          "ringTransparency": 1,
+          "savedLayouts": [],
+          "scale": 1,
+          "scaleReferenceHeight": 1080,
+          "screenMode": "all",
+          "secondCapsuleAngleOffset": -18,
+          "secondCapsuleColor": "",
+          "secondCapsuleFont": "",
+          "secondCapsuleRadiusOffset": 0,
+          "secondCapsuleScale": 1,
+          "secondRingColor": "",
+          "secondRingOpacity": 1,
+          "selectedMonitors": [],
+          "showDate": true,
+          "showHour": true,
+          "showMinuteCapsule": true,
+          "showRingLabels": true,
+          "showRings": true,
+          "showSecondCapsule": true,
+          "showSeconds": true,
+          "subtimeScale": 1,
+          "use24h": false
+        },
+        {
+          "id": "io.github.cempack.omapods"
+        },
+        {
+          "id": "omarchy.tailscale"
+        },
+        {
+          "id": "asusctl"
+        }
+      ]
+    },
+    "position": "top"
+  },
+  "cloneSourceRestores": [
+    "wowzontle.notifications"
+  ],
+  "disabledPlugins": [
+    "omarchy.notifications",
+    "rosakodu.dock"
+  ],
+  "idle": {
+    "lock": 300,
+    "screensaver": 150
+  },
+  "plugins": [
+    {
+      "id": "piyush.omaswitch"
+    },
+    {
+      "id": "local.workspace-overview"
+    },
+    {
+      "id": "wowzontle.notifications"
+    },
+    {
+      "id": "io.github.pantherdev2024.quartermaster"
+    },
+    {
+      "id": "bobbynicholas.omaland"
+    },
+    {
+      "align": "center",
+      "autohide": false,
+      "backgroundOpacity": 0.68,
+      "cornerRadius": 8,
+      "cornerShape": "rounded",
+      "dodge": false,
+      "edge": "bottom",
+      "iconSize": 21.1909,
+      "id": "odock",
+      "items": [
+        {
+          "desktop": "org.gnome.Nautilus"
+        },
+        {
+          "appId": "com.mitchellh.ghostty",
+          "desktop": "local-ghostty",
+          "label": "Ghostty"
+        },
+        {
+          "desktop": "bluebubbles",
+          "label": "iMessage"
+        },
+        {
+          "desktop": "chromium"
+        },
+        {
+          "appId": "chrome-app.hey.com__-Default",
+          "desktop": "HEY",
+          "label": "HEY"
+        },
+        {
+          "appId": "org.gnome.Evolution",
+          "desktop": "local-calendar"
+        },
+        {
+          "desktop": "inkdrop"
+        },
+        {
+          "desktop": "slack"
+        },
+        {
+          "desktop": "discord"
+        },
+        {
+          "desktop": "chatgpt"
+        },
+        {
+          "appId": "chrome-app.hey.com__calendar-Default",
+          "desktop": "local-hey-calendar"
+        },
+        {
+          "appId": "chrome-web.whatsapp.com__-Default",
+          "desktop": "WhatsApp"
+        },
+        {
+          "appId": "com.anthropic.Claude",
+          "desktop": "local-claude",
+          "label": "Claude"
+        },
+        {
+          "appId": "chrome-youtube.com__-Default",
+          "desktop": "YouTube"
+        },
+        {
+          "desktop": "zcode"
+        },
+        {
+          "appId": "chrome-podcasts.apple.com__-Default",
+          "desktop": "local-apple-podcasts"
+        },
+        {
+          "appId": "chrome-tv.apple.com__-Default",
+          "desktop": "local-apple-tv"
+        },
+        {
+          "appId": "chrome-www.brain.fm__-Default",
+          "desktop": "local-brain-fm"
+        },
+        {
+          "appId": "chrome-music.apple.com__-Default",
+          "desktop": "local-apple-music"
+        },
+        {
+          "appId": "TUI.tile",
+          "desktop": "Docker"
+        },
+        {
+          "appId": [],
+          "desktop": "local-applications"
+        },
+        {
+          "appId": [],
+          "desktop": "local-downloads"
+        },
+        {
+          "appId": [],
+          "desktop": "local-trash"
+        },
+        {
+          "desktop": "spotify"
+        }
+      ],
+      "labels": true,
+      "magnify": true,
+      "monochrome": false,
+      "padding": 4.5409,
+      "reserveSpace": true,
+      "runningIndicator": "dot",
+      "showRunning": true,
+      "showWhenEmpty": true,
+      "spacing": 4.0201,
+      "tintIcons": false,
+      "tintRunning": false,
+      "zoom": 0.75
+    },
+    {
+      "id": "taxin.cursor-style"
+    },
+    {
+      "id": "io.github.saikomantisu.commandbar"
+    },
+    {
+      "id": "wowzontle.desktop-icons"
+    }
+  ],
+  "version": 1
+}

@@ -1,0 +1,18 @@
+{
+  "upstream": "https://github.com/pantherdev2024/Quartermaster.git",
+  "base_commit": "f7945a1cb2ed917a467a82b62136c70eca039e7d",
+  "patch": "quartermaster-six-sections.patch",
+  "files": [
+    "BarLayout.js",
+    "BarRail.qml",
+    "BarWorkbench.qml",
+    "Loadout.qml",
+    "README.md",
+    "scan.sh",
+    "tests/barlayout.test.js",
+    "tests/run.sh",
+    "tests/scan-test.sh",
+    "tests/barui-test.sh",
+    "tests/barui.qml"
+  ]
+}

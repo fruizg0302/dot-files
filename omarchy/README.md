@@ -5,6 +5,41 @@ Personal overrides for Omarchy 4's Lua-based Hyprland configuration.
 - The [display recovery guard](display-guard/README.md) keeps monitor recovery
   from undoing intentional lock-screen display blanking after suspend. It has
   its own restore instructions and does not require the plugins below.
+
+## Current PX13 preferences
+
+The [selected PX13 snapshot](px13/README.md) captures the current input,
+display, appearance, bindings, shell layout, menu, and keyboard-lighting
+preferences. It is separate from the historical plugin patches below.
+
+### Quartermaster six-section bar layouts
+
+`patches/quartermaster-six-sections.patch` preserves the local changes to
+[Quartermaster](https://github.com/pantherdev2024/Quartermaster) at base commit
+`f7945a1cb2ed917a467a82b62136c70eca039e7d`. The adjacent JSON file records the
+base and affected files; the upstream MIT notice is in
+`licenses/quartermaster.txt`.
+
+The patch keeps `centerBegin`, `centerEnd`, and `tray` alongside the original
+three bar sections, renders the additional visible sections, and preserves
+drawer contents when editing a layout. It includes the local model, scan,
+and offscreen UI regression tests.
+
+Apply only to a clean checkout at the recorded base, not over an existing
+local modification. Run from the dotfiles checkout root:
+
+```bash
+DOTFILES="$(pwd)"
+PLUGIN="$HOME/.config/omarchy/plugins/io.github.pantherdev2024.quartermaster"
+git -C "$PLUGIN" apply --check "$DOTFILES/omarchy/patches/quartermaster-six-sections.patch"
+git -C "$PLUGIN" apply "$DOTFILES/omarchy/patches/quartermaster-six-sections.patch"
+bash "$PLUGIN/tests/run.sh"
+```
+
+The tests use temporary homes and fixtures rather than installing settings.
+
+## Historical dock and switcher patches
+
 - The dock matches custom launchers using `StartupWMClass`, so Ghostty and Zed
   windows stay grouped under their pinned icons when minimized or restored.
 - Super+Tab previews the next window while Super is held and focuses it when

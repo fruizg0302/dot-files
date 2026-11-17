@@ -58,6 +58,20 @@ nvim --headless "+Lazy! restore" +qa
 > and stores data under `~/.local/share/lazyvim`. If the repo moves and this
 > symlink is left dangling, `nvim` silently falls back to the vanilla editor.
 
+## Linux / Omarchy
+
+The [Bash port](bash/README.md) loads after Omarchy's own shell configuration.
+It includes the shared Oh My Posh theme and an optional
+[Starship configuration](starship/starship.toml). Keep machine-local settings in
+`~/.bashrc.local`; private deployment hooks are not published.
+
+The [PX13 snapshot](omarchy/px13/README.md) records selected desktop preferences,
+including the MD301 mouse sensitivity and KD300 keyboard repeat delay. It is
+not a complete home-directory backup or an automatic installer.
+
+The [Omarchy notes](omarchy/README.md) also preserve the local Quartermaster
+six-section bar-layout patch, its upstream base, tests, and license.
+
 ## Machine-local configuration (`~/.zshrc.local`)
 
 `zsh/zshrc` is shared across machines. Anything private, host-specific, or
